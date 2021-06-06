@@ -1,3 +1,13 @@
+mod parse {
+    pub mod parse;
+}
+
+mod vm {
+    pub mod instruction;
+}
+
 fn main() {
-    println!("Hello, world!");
+    let message = String::from("Hello world!");
+
+    println!("{}", message);
 }
