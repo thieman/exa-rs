@@ -33,15 +33,19 @@ fn parse_register(i: &str) -> IResult<&str, String> {
     })(i)
 }
 
+fn parse_register_target(i: &str) -> IResult<&str, Target> {
+    match parse_register(i) {
+        Ok(parsed) => Ok((parsed.0, Target::Register(parsed.1))),
+        Err(error) => Err(error),
+    }
+}
+
 fn parse_target(i: &str) -> IResult<&str, Target> {
     if let Ok(parsed) = parse_literal(i) {
         return Ok((parsed.0, Target::Literal(parsed.1)));
     }
 
-    match parse_register(i) {
-        Ok(parsed) => Ok((parsed.0, Target::Register(parsed.1))),
-        Err(error) => Err(error),
-    }
+    parse_register_target(i)
 }
 
 fn parse_copy(i: &str) -> IResult<&str, Instruction> {
@@ -60,8 +64,38 @@ fn parse_link(i: &str) -> IResult<&str, Instruction> {
     Ok((t.0, Instruction::Link(t.1 .2)))
 }
 
+fn parse_addi(i: &str) -> IResult<&str, Instruction> {
+    let t = tuple((
+        tag_no_case("addi"),
+        space1,
+        parse_target,
+        space1,
+        parse_target,
+        space1,
+        parse_register_target,
+    ))(i)?;
+    Ok((t.0, Instruction::Addi(t.1 .2, t.1 .4, t.1 .6)))
+}
+
+fn parse_muli(i: &str) -> IResult<&str, Instruction> {
+    let t = tuple((
+        tag_no_case("muli"),
+        space1,
+        parse_target,
+        space1,
+        parse_target,
+        space1,
+        parse_register_target,
+    ))(i)?;
+    Ok((t.0, Instruction::Muli(t.1 .2, t.1 .4, t.1 .6)))
+}
+
 pub fn parse_line(i: &str) -> IResult<&str, Instruction> {
-    let t = tuple((alt((parse_link, parse_copy)), space0, line_ending))(i)?;
+    let t = tuple((
+        alt((parse_link, parse_copy, parse_addi, parse_muli)),
+        space0,
+        line_ending,
+    ))(i)?;
     Ok((t.0, t.1 .0))
 }
 

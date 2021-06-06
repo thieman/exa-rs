@@ -21,11 +21,56 @@ fn strip_empty_lines(i: &str) -> String {
     empty.replace_all(i, "").to_owned().to_string()
 }
 
+fn expand_macros(i: &str) -> String {
+    let macros =
+        Regex::new(r"(?is)@rep[[:blank:]]+(\d+)[[:blank:]]?\n(.+)[[:blank:]]?@end[[:blank:]]?\n")
+            .unwrap();
+    let expansions = Regex::new(r"@\{(-?\d)+,(-?\d)+\}").unwrap();
+
+    let mut out = String::with_capacity(i.len());
+
+    let mut furthest_read: usize = 0;
+
+    for caps in macros.captures_iter(i) {
+        out.push_str(&i[furthest_read..caps.get(0).unwrap().start()]);
+
+        let reps: i16 = caps.get(1).unwrap().as_str().parse().unwrap();
+
+        let raw_body = caps.get(2).unwrap().as_str();
+        let raw_expansions: Vec<(&str, i16, i16)> = expansions
+            .captures_iter(raw_body)
+            .map(|c| {
+                (
+                    c.get(0).unwrap().as_str(),
+                    c.get(1).unwrap().as_str().parse().unwrap(),
+                    c.get(2).unwrap().as_str().parse().unwrap(),
+                )
+            })
+            .collect();
+
+        for iteration in 0..reps {
+            let mut replaced_body = raw_body.to_string();
+            for exp in &raw_expansions {
+                let value = exp.1 + (iteration * exp.2);
+                replaced_body = replaced_body.replace(exp.0, &value.to_string());
+            }
+
+            out.push_str(&replaced_body);
+        }
+
+        furthest_read = caps.get(0).unwrap().end();
+    }
+
+    // Add everything past the last macro match
+    out.push_str(&i[furthest_read..]);
+    out
+}
+
 pub fn preprocess_text(i: &str) -> String {
     let mut out = strip_whitespace(i);
     out = strip_comments(&out);
     out = strip_empty_lines(&out);
-    out
+    expand_macros(&out)
 }
 
 #[cfg(test)]
@@ -75,6 +120,29 @@ mod tests {
         assert_eq!(
             strip_empty_lines("  some bullshit\n\n\n  ok\n"),
             String::from("  some bullshit\n  ok\n")
+        );
+    }
+
+    #[test]
+    fn test_expand_macros() {
+        assert_eq!(
+            expand_macros("nothing\nto expand\n"),
+            String::from("nothing\nto expand\n"),
+        );
+
+        assert_eq!(
+            expand_macros("header\n@rep 5\nbooya\n@end\n"),
+            String::from("header\nbooya\nbooya\nbooya\nbooya\nbooya\n"),
+        );
+
+        assert_eq!(
+            expand_macros("@rep 2\nlink @{3,5}\ncopy @{1,2} x\n@end\n"),
+            String::from("link 3\ncopy 1 x\nlink 8\ncopy 3 x\n"),
+        );
+
+        assert_eq!(
+            expand_macros("@rep 2\nlink @{-1,-4}\ncopy @{-5,3} x\n@end\n"),
+            String::from("link -1\ncopy -5 x\nlink -5\ncopy -2 x\n"),
         );
     }
 }
