@@ -1,5 +1,10 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 
+type Shared<T> = Rc<RefCell<T>>;
+
+#[derive(Debug)]
 pub struct Host<'a> {
     pub name: String,
 
@@ -8,11 +13,11 @@ pub struct Host<'a> {
     // level art, or anything else.
     pub capacity: u16,
 
-    // key is the number of the link that needs to be passed to the LINK
+    // key is the number of the link that needs to be passed to the LINK op
     pub links: HashMap<u16, HostLink<'a>>,
 }
 
-impl<'a> Host<'a> {
+impl<'a> Host<'_> {
     pub fn new(name: String, capacity: u16) -> Host<'a> {
         Host {
             name,
@@ -20,46 +25,56 @@ impl<'a> Host<'a> {
             links: HashMap::new(),
         }
     }
+    pub fn new_shared(name: String, capacity: u16) -> Shared<Host<'a>> {
+        Rc::new(RefCell::new(Host::new(name, capacity)))
+    }
 }
 
+#[derive(Debug)]
 pub struct HostLink<'a> {
-    pub to_host: &'a Host<'a>,
+    pub to_host: Shared<Host<'a>>,
     // links can only support one traversal per cycle
     pub traversed_this_cycle: bool,
 }
 
+#[derive(Debug)]
 pub enum Permissions {
     ReadOnly,
     WriteOnly,
     ReadWrite,
 }
 
+#[derive(Debug)]
 pub struct Register {
     pub permissions: Permissions,
     pub value: i16,
 }
 
-pub struct Level<'a> {
-    hosts: HashMap<String, Host<'a>>,
+#[derive(Debug)]
+pub struct VM<'a> {
+    hosts: HashMap<String, Shared<Host<'a>>>,
 }
 
-impl<'a> Level<'a> {
-    pub fn new() -> Level<'a> {
-        Level {
+impl<'a> VM<'a> {
+    pub fn new() -> VM<'a> {
+        VM {
             hosts: HashMap::new(),
         }
     }
-    pub fn add_host(&mut self, h: Host<'a>) -> &Host<'a> {
-        let name = h.name.clone();
-        self.hosts.insert(name.clone(), h);
-        self.hosts.get(&name).unwrap()
+    pub fn add_host(&mut self, host: Shared<Host<'a>>) {
+        self.hosts
+            .insert(String::from(&host.borrow().name), host.clone());
     }
-    pub fn add_link<'b>(&mut self, link_id: u16, from_host: &Host<'a>, to_host: &'a Host<'a>) {
+    pub fn add_link<'b>(
+        &mut self,
+        link_id: u16,
+        from_host: Shared<Host<'b>>,
+        to_host: Shared<Host<'b>>,
+    ) {
         let link = HostLink {
             to_host: to_host,
             traversed_this_cycle: false,
         };
-        let f = self.hosts.get_mut(&from_host.name).unwrap();
-        f.links.insert(link_id, link);
+        from_host.borrow_mut().links.insert(link_id, link);
     }
 }
