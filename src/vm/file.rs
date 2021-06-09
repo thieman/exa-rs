@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct File {
     id: u16,
     contents: Vec<i16>,

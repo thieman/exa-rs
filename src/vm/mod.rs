@@ -1,18 +1,24 @@
 extern crate simple_error;
 
+use std::cell::RefCell;
+use std::cmp::Ordering;
+use std::collections::HashMap;
+use std::error::Error;
+use std::fmt;
+use std::rc::Rc;
+
+use itertools::Itertools;
+
+use exa::Exa;
+
 pub mod cycle;
 pub mod exa;
 mod file;
 pub mod instruction;
 
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::error::Error;
-use std::rc::Rc;
-
 type Shared<T> = Rc<RefCell<T>>;
 
-#[derive(Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct Host<'a> {
     pub name: String,
 
@@ -58,7 +64,31 @@ impl<'a> Host<'_> {
     }
 }
 
-#[derive(Debug)]
+impl Ord for Host<'_> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.name.cmp(&other.name)
+    }
+}
+
+impl PartialOrd for Host<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.name.cmp(&other.name))
+    }
+}
+
+impl fmt::Display for Host<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Host {} (free capacity: {} / {})",
+            self.name,
+            (self.capacity - self.occupied),
+            self.capacity
+        )
+    }
+}
+
+#[derive(PartialEq, Eq, Debug)]
 pub struct HostLink<'a> {
     pub to_host: Shared<Host<'a>>,
     // links can only support one traversal per cycle
@@ -84,6 +114,8 @@ pub struct VM<'a> {
     cycle: u64,
 
     hosts: HashMap<String, Shared<Host<'a>>>,
+
+    exas: Vec<Shared<Exa<'a>>>,
 }
 
 impl<'a> VM<'a> {
@@ -91,6 +123,7 @@ impl<'a> VM<'a> {
         VM {
             cycle: 0,
             hosts: HashMap::new(),
+            exas: Vec::new(),
         }
     }
     pub fn add_host(&mut self, host: Shared<Host<'a>>) {
@@ -108,5 +141,23 @@ impl<'a> VM<'a> {
             traversed_this_cycle: false,
         };
         from_host.borrow_mut().links.insert(link_id, link);
+    }
+    pub fn register_exa(&mut self, exa: Shared<Exa<'a>>) {
+        self.exas.push(exa);
+    }
+}
+
+impl fmt::Display for VM<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "VM (cycle:{})", self.cycle);
+        for h in self.hosts.values().sorted() {
+            write!(f, "\n\t{}", h.borrow());
+            for e in self.exas.iter() {
+                if e.borrow().host == *h {
+                    write!(f, "\n\t\t{}", e.borrow());
+                }
+            }
+        }
+        Ok(())
     }
 }

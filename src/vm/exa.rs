@@ -1,17 +1,21 @@
+use std::cell::RefCell;
 use std::error::Error;
+use std::fmt;
 use std::rc::Rc;
 
 use super::super::parse::parse_text;
 use super::file::File;
 use super::instruction::Instruction;
 use super::Permissions;
-use super::{Host, Shared};
+use super::{Host, Shared, VM};
 
+#[derive(Debug)]
 struct Register {
     permissions: Permissions,
     value: i16,
 }
 
+#[derive(Debug)]
 struct Registers {
     X: Register,
     T: Register,
@@ -99,31 +103,34 @@ impl Registers {
     }
 }
 
+#[derive(Debug)]
 enum Mode {
     Local,
     Global,
 }
 
+#[derive(Debug)]
 pub struct Exa<'a> {
-    name: String,
+    pub name: String,
     registers: Registers,
     pc: u16,
     instructions: Vec<Instruction>,
     mode: Mode,
     file_pointer: u16,
     file: Option<Rc<File>>,
-    host: Shared<Host<'a>>,
+    pub host: Shared<Host<'a>>,
 }
 
 impl<'a> Exa<'a> {
     /// Spawn an Exa in the specified Host, if there is available space.
     pub fn spawn(
+        vm: &mut VM<'a>,
         host: Shared<Host<'a>>,
         name: String,
         script: &str,
-    ) -> Result<Exa<'a>, Box<dyn Error>> {
+    ) -> Result<Shared<Exa<'a>>, Box<dyn Error>> {
         host.borrow_mut().reserve_slot()?;
-        Ok(Exa {
+        let e = Rc::new(RefCell::new(Exa {
             name,
             registers: Registers::new(),
             pc: 0,
@@ -132,6 +139,14 @@ impl<'a> Exa<'a> {
             file_pointer: 0,
             file: None,
             host: host,
-        })
+        }));
+        vm.register_exa(e.clone());
+        Ok(e)
+    }
+}
+
+impl fmt::Display for Exa<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Exa {}", self.name)
     }
 }
