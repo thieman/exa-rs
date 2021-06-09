@@ -45,6 +45,7 @@ version = "0.1.0"
 dependencies = [
  "nom",
  "regex",
+ "simple-error",
 ]
 
 [[package]]
@@ -113,6 +114,12 @@ name = "ryu"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71d301d4193d031abdd79ff7e3dd721168a9572ef3fe51a1517aba235bd8f86e"
+
+[[package]]
+name = "simple-error"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc47a29ce97772ca5c927f75bac34866b16d64e07f330c3248e2d7226623901b"
 
 [[package]]
 name = "static_assertions"

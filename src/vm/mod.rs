@@ -1,5 +1,13 @@
+extern crate simple_error;
+
+pub mod cycle;
+pub mod exa;
+mod file;
+pub mod instruction;
+
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::error::Error;
 use std::rc::Rc;
 
 type Shared<T> = Rc<RefCell<T>>;
@@ -13,6 +21,9 @@ pub struct Host<'a> {
     // level art, or anything else.
     pub capacity: u16,
 
+    // occupied is how much of the capacity is currently filled
+    pub occupied: u16,
+
     // key is the number of the link that needs to be passed to the LINK op
     pub links: HashMap<u16, HostLink<'a>>,
 }
@@ -22,11 +33,28 @@ impl<'a> Host<'_> {
         Host {
             name,
             capacity,
+            occupied: 0,
             links: HashMap::new(),
         }
     }
     pub fn new_shared(name: String, capacity: u16) -> Shared<Host<'a>> {
         Rc::new(RefCell::new(Host::new(name, capacity)))
+    }
+
+    /// Increments occupied by 1, if there is remaining capacity. Successful
+    /// calls mean you need to free_slot later when you leave the Host.
+    pub fn reserve_slot(&mut self) -> Result<(), Box<dyn Error>> {
+        if self.capacity <= self.occupied {
+            simple_error::bail!("host has no remaining capacity");
+        }
+        self.occupied += 1;
+        Ok(())
+    }
+
+    /// Decrements occupied by 1. Call this when you move out of a Host.__rust_force_expr!
+    /// Calling this before reserving a slot from the same object would...be bad, don't do that.
+    pub fn free_slot(&mut self) {
+        self.occupied -= 1;
     }
 }
 
@@ -39,6 +67,7 @@ pub struct HostLink<'a> {
 
 #[derive(Debug)]
 pub enum Permissions {
+    Denied,
     ReadOnly,
     WriteOnly,
     ReadWrite,
@@ -52,12 +81,15 @@ pub struct Register {
 
 #[derive(Debug)]
 pub struct VM<'a> {
+    cycle: u64,
+
     hosts: HashMap<String, Shared<Host<'a>>>,
 }
 
 impl<'a> VM<'a> {
     pub fn new() -> VM<'a> {
         VM {
+            cycle: 0,
             hosts: HashMap::new(),
         }
     }

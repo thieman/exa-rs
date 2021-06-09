@@ -1,8 +1,11 @@
 extern crate nom;
 
-use super::super::vm::instruction::Instruction;
-use super::parts::parse_line;
-use super::preprocess::preprocess_text;
+mod parts;
+mod preprocess;
+
+use super::vm::instruction::Instruction;
+use parts::parse_line;
+use preprocess::preprocess_text;
 
 use nom::multi::many1;
 
@@ -18,7 +21,7 @@ pub fn parse_text(i: &str) -> Result<Vec<Instruction>, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::super::vm::instruction::Target;
+    use super::super::vm::instruction::Target;
     use super::*;
 
     #[test]
