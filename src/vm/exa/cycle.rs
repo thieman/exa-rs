@@ -7,8 +7,8 @@ impl<'a> Exa<'a> {
             self.pc = 0;
         }
 
-        match &self.instructions[self.pc] {
-            Instruction::Link(dest) => self.link(dest),
+        match &self.instructions[self.pc].clone() {
+            Instruction::Link(ref dest) => self.link(dest),
             _ => println!("something else!"),
         }
 

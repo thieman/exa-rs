@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Instruction {
     Copy(Target, Target),
     Addi(Target, Target, Target),
@@ -35,7 +35,7 @@ pub enum Instruction {
     // Data(N...),
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Target {
     Literal(i32),
     Register(String),
@@ -43,7 +43,7 @@ pub enum Target {
 
 pub type Label = String;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Comparator {
     Equal,
     GreaterThan,
