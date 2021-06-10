@@ -20,7 +20,12 @@ fn main() {
 
     vm.add_link(800, h1.clone(), h2.clone());
 
-    let exa1 = Exa::spawn(&mut vm, h1.clone(), String::from("X0"), "link 800\n");
+    let exa1 = Exa::spawn(
+        &mut vm,
+        h1.clone(),
+        String::from("X0"),
+        "link 800\ncopy 1 x\n",
+    );
 
     println!("{}", vm);
     vm.run_cycle();

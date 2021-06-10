@@ -149,12 +149,12 @@ impl<'a> VM<'a> {
 
 impl fmt::Display for VM<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "VM (cycle:{})", self.cycle);
+        write!(f, "VM (cycle:{})", self.cycle)?;
         for h in self.hosts.values().sorted() {
-            write!(f, "\n\t{}", h.borrow());
+            write!(f, "\n\t{}", h.borrow())?;
             for e in self.exas.iter() {
                 if e.borrow().host == *h {
-                    write!(f, "\n\t\t{}", e.borrow());
+                    write!(f, "\n\t\t{}", e.borrow())?;
                 }
             }
         }

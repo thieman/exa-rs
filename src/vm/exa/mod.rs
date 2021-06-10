@@ -1,3 +1,5 @@
+mod cycle;
+
 use std::cell::RefCell;
 use std::error::Error;
 use std::fmt;
@@ -17,48 +19,48 @@ struct Register {
 
 #[derive(Debug)]
 struct Registers {
-    X: Register,
-    T: Register,
-    GX: Register,
-    GY: Register,
-    GZ: Register,
-    GP: Register,
-    CI: Register,
-    CO: Register,
+    x: Register,
+    t: Register,
+    gx: Register,
+    gy: Register,
+    gz: Register,
+    gp: Register,
+    ci: Register,
+    co: Register,
 }
 
 impl Registers {
     pub fn new() -> Registers {
         Registers {
-            X: Register {
+            x: Register {
                 permissions: Permissions::ReadWrite,
                 value: 0,
             },
-            T: Register {
+            t: Register {
                 permissions: Permissions::ReadWrite,
                 value: 0,
             },
-            GX: Register {
+            gx: Register {
                 permissions: Permissions::Denied,
                 value: 0,
             },
-            GY: Register {
+            gy: Register {
                 permissions: Permissions::Denied,
                 value: 0,
             },
-            GZ: Register {
+            gz: Register {
                 permissions: Permissions::Denied,
                 value: 0,
             },
-            GP: Register {
+            gp: Register {
                 permissions: Permissions::Denied,
                 value: 0,
             },
-            CI: Register {
+            ci: Register {
                 permissions: Permissions::Denied,
                 value: 0,
             },
-            CO: Register {
+            co: Register {
                 permissions: Permissions::Denied,
                 value: 0,
             },
@@ -67,36 +69,36 @@ impl Registers {
 
     pub fn new_redshift() -> Registers {
         Registers {
-            X: Register {
+            x: Register {
                 permissions: Permissions::ReadWrite,
                 value: 0,
             },
-            T: Register {
+            t: Register {
                 permissions: Permissions::ReadWrite,
                 value: 0,
             },
-            GX: Register {
-                permissions: Permissions::Denied,
+            gx: Register {
+                permissions: Permissions::ReadWrite,
                 value: 0,
             },
-            GY: Register {
-                permissions: Permissions::Denied,
+            gy: Register {
+                permissions: Permissions::ReadWrite,
                 value: 0,
             },
-            GZ: Register {
-                permissions: Permissions::Denied,
+            gz: Register {
+                permissions: Permissions::ReadWrite,
                 value: 0,
             },
-            GP: Register {
+            gp: Register {
                 permissions: Permissions::WriteOnly,
                 value: 0,
             },
-            CI: Register {
+            ci: Register {
                 permissions: Permissions::ReadOnly,
                 value: 0,
             },
-            CO: Register {
-                permissions: Permissions::Denied,
+            co: Register {
+                permissions: Permissions::ReadWrite,
                 value: 0,
             },
         }
@@ -113,12 +115,13 @@ enum Mode {
 pub struct Exa<'a> {
     pub name: String,
     registers: Registers,
-    pc: u16,
+    pc: usize,
     instructions: Vec<Instruction>,
     mode: Mode,
     file_pointer: u16,
     file: Option<Rc<File>>,
     pub host: Shared<Host<'a>>,
+    pub error: Option<Box<dyn Error>>,
 }
 
 impl<'a> Exa<'a> {
@@ -139,6 +142,7 @@ impl<'a> Exa<'a> {
             file_pointer: 0,
             file: None,
             host: host,
+            error: None,
         }));
         vm.register_exa(e.clone());
         Ok(e)
