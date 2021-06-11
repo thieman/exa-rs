@@ -10,11 +10,14 @@ use std::rc::Rc;
 use itertools::Itertools;
 
 use exa::Exa;
+use register::Register;
 
 pub mod cycle;
+mod error;
 pub mod exa;
 mod file;
 pub mod instruction;
+pub mod register;
 
 type Shared<T> = Rc<RefCell<T>>;
 
@@ -32,6 +35,8 @@ pub struct Host<'a> {
 
     // key is the number of the link that needs to be passed to the LINK op
     pub links: HashMap<u16, HostLink<'a>>,
+
+    pub registers: HashMap<String, Shared<Register>>,
 }
 
 impl<'a> Host<'_> {
@@ -41,6 +46,7 @@ impl<'a> Host<'_> {
             capacity,
             occupied: 0,
             links: HashMap::new(),
+            registers: HashMap::new(),
         }
     }
     pub fn new_shared(name: String, capacity: u16) -> Shared<Host<'a>> {
@@ -61,6 +67,10 @@ impl<'a> Host<'_> {
     /// Calling this before reserving a slot from the same object would...be bad, don't do that.
     pub fn free_slot(&mut self) {
         self.occupied -= 1;
+    }
+
+    pub fn add_register(&mut self, name: String, register: Shared<Register>) {
+        self.registers.insert(name.to_ascii_lowercase(), register);
     }
 }
 
@@ -95,18 +105,12 @@ pub struct HostLink<'a> {
     pub traversed_this_cycle: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Permissions {
     Denied,
     ReadOnly,
     WriteOnly,
     ReadWrite,
-}
-
-#[derive(Debug)]
-pub struct Register {
-    pub permissions: Permissions,
-    pub value: i16,
 }
 
 #[derive(Debug)]

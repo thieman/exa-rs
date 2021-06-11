@@ -1,8 +1,12 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 mod parse;
 mod vm;
 
 use parse::parse_text;
 use vm::exa::Exa;
+use vm::register::Register;
 use vm::*;
 
 fn main() {
@@ -10,7 +14,9 @@ fn main() {
     println!("{:?}", v);
 
     let h1 = Host::new_shared(String::from("one"), 2);
-
+    let r = Register::new(Permissions::ReadWrite, 0);
+    h1.borrow_mut()
+        .add_register(String::from("#REG"), Rc::new(RefCell::new(r)));
     let h2 = Host::new_shared(String::from("two"), 2);
 
     let mut vm = VM::new();

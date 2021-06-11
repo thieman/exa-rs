@@ -1,11 +1,11 @@
 #[derive(Debug)]
 pub struct File {
-    id: u16,
-    contents: Vec<i16>,
+    id: u32,
+    contents: Vec<i32>,
 }
 
 impl File {
-    pub fn new(id: u16, contents: Vec<i16>) -> File {
+    pub fn new(id: u32, contents: Vec<i32>) -> File {
         File { id, contents }
     }
 }

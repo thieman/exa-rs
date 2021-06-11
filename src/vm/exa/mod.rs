@@ -8,99 +8,46 @@ use std::rc::Rc;
 use super::super::parse::parse_text;
 use super::file::File;
 use super::instruction::Instruction;
+use super::register::Register;
 use super::Permissions;
 use super::{Host, Shared, VM};
 
 #[derive(Debug)]
-struct Register {
-    permissions: Permissions,
-    value: i16,
-}
-
-#[derive(Debug)]
 struct Registers {
-    x: Register,
-    t: Register,
-    gx: Register,
-    gy: Register,
-    gz: Register,
-    gp: Register,
-    ci: Register,
-    co: Register,
+    x: Shared<Register>,
+    t: Shared<Register>,
+    gx: Shared<Register>,
+    gy: Shared<Register>,
+    gz: Shared<Register>,
+    gp: Shared<Register>,
+    ci: Shared<Register>,
+    co: Shared<Register>,
 }
 
 impl Registers {
     pub fn new() -> Registers {
         Registers {
-            x: Register {
-                permissions: Permissions::ReadWrite,
-                value: 0,
-            },
-            t: Register {
-                permissions: Permissions::ReadWrite,
-                value: 0,
-            },
-            gx: Register {
-                permissions: Permissions::Denied,
-                value: 0,
-            },
-            gy: Register {
-                permissions: Permissions::Denied,
-                value: 0,
-            },
-            gz: Register {
-                permissions: Permissions::Denied,
-                value: 0,
-            },
-            gp: Register {
-                permissions: Permissions::Denied,
-                value: 0,
-            },
-            ci: Register {
-                permissions: Permissions::Denied,
-                value: 0,
-            },
-            co: Register {
-                permissions: Permissions::Denied,
-                value: 0,
-            },
+            x: Register::new_shared(Permissions::ReadWrite, 0),
+            t: Register::new_shared(Permissions::ReadWrite, 0),
+            gx: Register::new_shared(Permissions::Denied, 0),
+            gy: Register::new_shared(Permissions::Denied, 0),
+            gz: Register::new_shared(Permissions::Denied, 0),
+            gp: Register::new_shared(Permissions::Denied, 0),
+            ci: Register::new_shared(Permissions::Denied, 0),
+            co: Register::new_shared(Permissions::Denied, 0),
         }
     }
 
     pub fn new_redshift() -> Registers {
         Registers {
-            x: Register {
-                permissions: Permissions::ReadWrite,
-                value: 0,
-            },
-            t: Register {
-                permissions: Permissions::ReadWrite,
-                value: 0,
-            },
-            gx: Register {
-                permissions: Permissions::ReadWrite,
-                value: 0,
-            },
-            gy: Register {
-                permissions: Permissions::ReadWrite,
-                value: 0,
-            },
-            gz: Register {
-                permissions: Permissions::ReadWrite,
-                value: 0,
-            },
-            gp: Register {
-                permissions: Permissions::WriteOnly,
-                value: 0,
-            },
-            ci: Register {
-                permissions: Permissions::ReadOnly,
-                value: 0,
-            },
-            co: Register {
-                permissions: Permissions::ReadWrite,
-                value: 0,
-            },
+            x: Register::new_shared(Permissions::ReadWrite, 0),
+            t: Register::new_shared(Permissions::ReadWrite, 0),
+            gx: Register::new_shared(Permissions::ReadWrite, 0),
+            gy: Register::new_shared(Permissions::ReadWrite, 0),
+            gz: Register::new_shared(Permissions::ReadWrite, 0),
+            gp: Register::new_shared(Permissions::WriteOnly, 0),
+            ci: Register::new_shared(Permissions::ReadOnly, 0),
+            co: Register::new_shared(Permissions::ReadWrite, 0),
         }
     }
 }
