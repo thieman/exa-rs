@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use super::super::error::{BlockingError, FatalError};
+use super::super::error::ExaError;
 use super::super::instruction::{Instruction, Target};
 use super::super::register::Register;
 use super::super::{Permissions, Shared};
@@ -37,18 +37,18 @@ impl<'a> Exa<'a> {
             let link = links.get_mut(&link_id);
 
             if link.is_none() {
-                return Err(Box::new(FatalError::new("invalid link id")));
+                return Err(ExaError::Fatal("invalid link id").into());
             }
 
             let l = link.unwrap();
             if l.traversed_this_cycle {
-                return Err(Box::new(BlockingError::new("link bandwidth exceeded")));
+                return Err(ExaError::Blocking("link bandwidth exceeded").into());
             }
 
             l.to_host
                 .borrow_mut()
                 .reserve_slot()
-                .map_err(|_| Box::new(BlockingError::new("destination host is full")))?;
+                .map_err(|_| Box::new(ExaError::Blocking("destination host is full")))?;
 
             l.traversed_this_cycle = true;
             self.host = l.to_host.clone();
@@ -65,14 +65,10 @@ impl<'a> Exa<'a> {
 
         match b.permissions {
             Permissions::Denied => {
-                return Err(Box::new(FatalError::new(
-                    "attempt to read from deactivated register",
-                )))
+                return Err(ExaError::Fatal("attempt to read from deactivated register").into());
             }
             Permissions::WriteOnly => {
-                return Err(Box::new(FatalError::new(
-                    "attempt to read from write-only register",
-                )))
+                return Err(ExaError::Fatal("attempt to read from write-only register").into())
             }
             _ => Ok(b.value),
         }
@@ -95,9 +91,7 @@ impl<'a> Exa<'a> {
 
         match r {
             Some(reg) => Ok(reg.clone()),
-            None => Err(Box::new(FatalError::new(
-                "attempt to access unknown hardware register",
-            ))),
+            None => Err(ExaError::Fatal("attempt to access unknown hardware register").into()),
         }
     }
 
@@ -111,11 +105,7 @@ impl<'a> Exa<'a> {
             "gp" => self.registers.gp.clone(),
             "ci" => self.registers.ci.clone(),
             "co" => self.registers.co.clone(),
-            _ => {
-                return Err(Box::new(FatalError::new(
-                    "attempted to access unknown exa register",
-                )))
-            }
+            _ => return Err(ExaError::Fatal("attempted to access unknown exa register").into()),
         };
         Ok(r)
     }

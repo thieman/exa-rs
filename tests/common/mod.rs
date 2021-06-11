@@ -3,10 +3,10 @@ extern crate exa;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use exa::vm::error::ExaError;
 use exa::vm::exa::Exa;
 use exa::vm::register::Register;
-use exa::vm::VM;
-use exa::vm::*;
+use exa::vm::{Host, Permissions, Shared, VM};
 
 pub struct TestBench<'a> {
     vm: Shared<VM<'a>>,
@@ -54,5 +54,34 @@ impl<'a> TestBench<'a> {
 
     pub fn assert_position(&self, exa: &Shared<Exa<'a>>, hostname: &str) {
         assert_eq!(exa.borrow().host.borrow().name, hostname);
+    }
+
+    pub fn assert_fatal_error(&self, exa: &Shared<Exa<'a>>) {
+        let e = exa.borrow();
+        let error = e.error.as_ref().unwrap();
+        match error.downcast_ref::<ExaError>() {
+            Some(e) => match *e {
+                ExaError::Fatal(_) => (),
+                _ => panic!("expected fatal error"),
+            },
+            _ => panic!("expected fatal error"),
+        }
+    }
+
+    pub fn assert_blocking_error(&self, exa: &Shared<Exa<'a>>) {
+        let e = exa.borrow();
+        let error = e.error.as_ref().unwrap();
+        match error.downcast_ref::<ExaError>() {
+            Some(e) => match *e {
+                ExaError::Blocking(_) => (),
+                _ => panic!("expected blocking error"),
+            },
+            _ => panic!("expected blocking error"),
+        }
+    }
+
+    pub fn assert_no_error(&self, exa: &Shared<Exa<'a>>) {
+        let e = exa.borrow();
+        assert!(e.error.is_none());
     }
 }
