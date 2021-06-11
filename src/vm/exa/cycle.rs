@@ -32,21 +32,30 @@ impl<'a> Exa<'a> {
         };
 
         let h = self.host.clone();
-        let links = &mut h.borrow_mut().links;
-        let link = links.get_mut(&link_id);
+        {
+            let links = &mut h.borrow_mut().links;
+            let link = links.get_mut(&link_id);
 
-        if link.is_none() {
-            return Err(Box::new(FatalError::new("invalid link id")));
+            if link.is_none() {
+                return Err(Box::new(FatalError::new("invalid link id")));
+            }
+
+            let l = link.unwrap();
+            if l.traversed_this_cycle {
+                return Err(Box::new(BlockingError::new("link bandwidth exceeded")));
+            }
+
+            l.to_host
+                .borrow_mut()
+                .reserve_slot()
+                .map_err(|_| Box::new(BlockingError::new("destination host is full")))?;
+
+            l.traversed_this_cycle = true;
+            self.host = l.to_host.clone();
         }
 
-        let l = link.unwrap();
-        if l.traversed_this_cycle {
-            return Err(Box::new(BlockingError::new("link bandwidth exceeded")));
-        }
+        h.borrow_mut().free_slot();
 
-        l.traversed_this_cycle = true;
-
-        self.host = l.to_host.clone();
         Ok(())
     }
 
