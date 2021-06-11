@@ -35,5 +35,5 @@ fn main() {
 
     println!("{}", vm);
     vm.run_cycle();
-    vm.run_cycle();
+    println!("{}", vm);
 }

@@ -98,6 +98,10 @@ impl<'a> Exa<'a> {
 
 impl fmt::Display for Exa<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Exa {}", self.name)
+        write!(f, "Exa {}", self.name);
+        if let Some(e) = &self.error {
+            write!(f, " (error: {})", e);
+        }
+        Ok(())
     }
 }

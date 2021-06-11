@@ -28,19 +28,19 @@ pub struct Host<'a> {
     // capacity is total squares that can be occupied by EXAs or files.
     // Do NOT include squares that are occupied by registers,
     // level art, or anything else.
-    pub capacity: u16,
+    pub capacity: usize,
 
     // occupied is how much of the capacity is currently filled
-    pub occupied: u16,
+    pub occupied: usize,
 
     // key is the number of the link that needs to be passed to the LINK op
-    pub links: HashMap<u16, HostLink<'a>>,
+    pub links: HashMap<i32, HostLink<'a>>,
 
     pub registers: HashMap<String, Shared<Register>>,
 }
 
 impl<'a> Host<'_> {
-    pub fn new(name: String, capacity: u16) -> Host<'a> {
+    pub fn new(name: String, capacity: usize) -> Host<'a> {
         Host {
             name,
             capacity,
@@ -49,7 +49,7 @@ impl<'a> Host<'_> {
             registers: HashMap::new(),
         }
     }
-    pub fn new_shared(name: String, capacity: u16) -> Shared<Host<'a>> {
+    pub fn new_shared(name: String, capacity: usize) -> Shared<Host<'a>> {
         Rc::new(RefCell::new(Host::new(name, capacity)))
     }
 
@@ -136,7 +136,7 @@ impl<'a> VM<'a> {
     }
     pub fn add_link<'b>(
         &mut self,
-        link_id: u16,
+        link_id: i32,
         from_host: Shared<Host<'b>>,
         to_host: Shared<Host<'b>>,
     ) {

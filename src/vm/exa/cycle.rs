@@ -13,10 +13,10 @@ impl<'a> Exa<'a> {
             _ => Ok(()),
         };
 
-        match result {
-            Ok(_) => (),
-            Err(e) => self.error = Some(e),
-        }
+        self.error = match result {
+            Ok(_) => None,
+            Err(e) => Some(e),
+        };
 
         if self.pc == (self.instructions.len() - 1) {
             self.pc = 0;
@@ -31,6 +31,22 @@ impl<'a> Exa<'a> {
             Target::Register(r) => self.read_register(r)?,
         };
 
+        let h = self.host.clone();
+        let links = &mut h.borrow_mut().links;
+        let link = links.get_mut(&link_id);
+
+        if link.is_none() {
+            return Err(Box::new(FatalError::new("invalid link id")));
+        }
+
+        let l = link.unwrap();
+        if l.traversed_this_cycle {
+            return Err(Box::new(BlockingError::new("link bandwidth exceeded")));
+        }
+
+        l.traversed_this_cycle = true;
+
+        self.host = l.to_host.clone();
         Ok(())
     }
 
