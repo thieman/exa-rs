@@ -4,7 +4,13 @@ version = "0.1.0"
 authors = ["Travis Thieman <travis.thieman@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "exa"
+path = "src/main.rs"
+
+[lib]
+name = "exa"
+path = "src/lib.rs"
 
 [dependencies]
 nom = "6.1.2"

@@ -9,7 +9,7 @@ use std::rc::Rc;
 
 use itertools::Itertools;
 
-use exa::Exa;
+use self::exa::Exa;
 use register::Register;
 
 pub mod cycle;
@@ -19,7 +19,7 @@ mod file;
 pub mod instruction;
 pub mod register;
 
-type Shared<T> = Rc<RefCell<T>>;
+pub type Shared<T> = Rc<RefCell<T>>;
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct Host<'a> {
@@ -115,11 +115,11 @@ pub enum Permissions {
 
 #[derive(Debug)]
 pub struct VM<'a> {
-    cycle: u64,
+    pub cycle: u64,
 
-    hosts: HashMap<String, Shared<Host<'a>>>,
+    pub hosts: HashMap<String, Shared<Host<'a>>>,
 
-    exas: Vec<Shared<Exa<'a>>>,
+    pub exas: Vec<Shared<Exa<'a>>>,
 }
 
 impl<'a> VM<'a> {
