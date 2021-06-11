@@ -10,6 +10,7 @@ impl<'a> Exa<'a> {
     pub fn run_cycle(&mut self) {
         let result = match &self.instructions[self.pc].clone() {
             Instruction::Link(ref dest) => self.link(dest),
+            Instruction::Copy(ref src, ref dest) => self.copy(src, dest),
             _ => Ok(()),
         };
 
@@ -59,6 +60,22 @@ impl<'a> Exa<'a> {
         Ok(())
     }
 
+    fn copy(&mut self, src: &Target, dest: &Target) -> Result<(), Box<dyn Error>> {
+        let src_value = match src {
+            Target::Literal(l) => *l,
+            Target::Register(r) => self.read_register(r)?,
+        };
+
+        match dest {
+            Target::Literal(_) => {
+                return Err(ExaError::Fatal("cannot copy to literal").into());
+            }
+            Target::Register(r) => self.write_register(r, src_value),
+        };
+
+        Ok(())
+    }
+
     fn read_register(&self, r_specifier: &str) -> Result<i32, Box<dyn Error>> {
         let r = self.resolve_register(r_specifier)?;
         let b = r.borrow();
@@ -72,6 +89,25 @@ impl<'a> Exa<'a> {
             }
             _ => Ok(b.value),
         }
+    }
+
+    fn write_register(&self, r_specifier: &str, value: i32) -> Result<(), Box<dyn Error>> {
+        let r = self.resolve_register(r_specifier)?;
+        let mut b = r.borrow_mut();
+
+        match b.permissions {
+            Permissions::Denied => {
+                return Err(ExaError::Fatal("attempt to write to deactivated register").into());
+            }
+            Permissions::ReadOnly => {
+                return Err(ExaError::Fatal("attempt to write to read-only register").into())
+            }
+            _ => (),
+        }
+
+        // TODO: Special registers
+        b.value = value;
+        Ok(())
     }
 
     fn resolve_register(&self, r_specifier: &str) -> Result<Shared<Register>, Box<dyn Error>> {
