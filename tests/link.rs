@@ -12,6 +12,7 @@ fn basic_link() {
     bench.assert_position(&e, "end");
     bench.run_cycle();
     bench.assert_position(&e, "start");
+    bench.assert_no_error(&e);
 }
 
 #[test]
@@ -37,6 +38,7 @@ fn link_from_exa_register() {
     bench.assert_position(&e, "end");
     bench.run_cycle();
     bench.assert_position(&e, "start");
+    bench.assert_no_error(&e);
 }
 
 #[test]
@@ -48,4 +50,38 @@ fn link_from_hardware_register() {
     bench.run_cycle();
     bench.run_cycle();
     bench.assert_position(&e, "end");
+    bench.assert_no_error(&e);
+}
+
+#[test]
+fn one_directional_blocking_bandwidth() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("link 800\n");
+    let e2 = bench.exa("link 800\n");
+
+    bench.run_cycle();
+    bench.assert_position(&e1, "end");
+    bench.assert_position(&e2, "start");
+    bench.assert_blocking_error(&e2);
+    bench.run_cycle();
+    bench.assert_position(&e2, "end");
+    bench.assert_no_error(&e2);
+}
+
+#[test]
+fn two_directional_blocking_bandwidth() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("noop\nlink 800\n");
+    let e2 = bench.exa("link 800\nlink -1\n");
+
+    bench.run_cycle();
+    bench.assert_position(&e1, "start");
+    bench.assert_position(&e2, "end");
+    bench.run_cycle();
+    bench.assert_position(&e1, "end");
+    bench.assert_position(&e2, "end");
+    bench.assert_blocking_error(&e2);
+    bench.run_cycle();
+    bench.assert_position(&e2, "start");
+    bench.assert_no_error(&e2);
 }

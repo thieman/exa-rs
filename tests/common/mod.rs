@@ -62,9 +62,9 @@ impl<'a> TestBench<'a> {
         match error.downcast_ref::<ExaError>() {
             Some(e) => match *e {
                 ExaError::Fatal(_) => (),
-                _ => panic!("expected fatal error"),
+                _ => panic!("expected fatal error, got {}", e),
             },
-            _ => panic!("expected fatal error"),
+            _ => panic!("expected fatal error, got {}", e),
         }
     }
 
@@ -74,9 +74,9 @@ impl<'a> TestBench<'a> {
         match error.downcast_ref::<ExaError>() {
             Some(e) => match *e {
                 ExaError::Blocking(_) => (),
-                _ => panic!("expected blocking error"),
+                _ => panic!("expected blocking error, got {}", e),
             },
-            _ => panic!("expected blocking error"),
+            _ => panic!("expected blocking error, got {}", e),
         }
     }
 

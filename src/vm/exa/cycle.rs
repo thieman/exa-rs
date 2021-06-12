@@ -8,9 +8,15 @@ use super::Exa;
 
 impl<'a> Exa<'a> {
     pub fn run_cycle(&mut self) {
+        if self.pc > self.instructions.len() - 1 {
+            self.error = Some(ExaError::Fatal("out of instructions").into());
+            return;
+        }
+
         let result = match &self.instructions[self.pc].clone() {
             Instruction::Link(ref dest) => self.link(dest),
             Instruction::Copy(ref src, ref dest) => self.copy(src, dest),
+            Instruction::Noop => Ok(()),
             _ => Ok(()),
         };
 
@@ -19,9 +25,7 @@ impl<'a> Exa<'a> {
             Err(e) => Some(e),
         };
 
-        if self.pc == (self.instructions.len() - 1) {
-            self.pc = 0;
-        } else {
+        if self.error.is_none() {
             self.pc += 1;
         }
     }
@@ -32,9 +36,9 @@ impl<'a> Exa<'a> {
             Target::Register(r) => self.read_register(r)?,
         };
 
-        let h = self.host.clone();
+        let start_host = self.host.clone();
         {
-            let links = &mut h.borrow_mut().links;
+            let links = &mut start_host.borrow_mut().links;
             let link = links.get_mut(&link_id);
 
             if link.is_none() {
@@ -46,16 +50,22 @@ impl<'a> Exa<'a> {
                 return Err(ExaError::Blocking("link bandwidth exceeded").into());
             }
 
-            l.to_host
-                .borrow_mut()
+            let mut to_host = l.to_host.borrow_mut();
+            to_host
                 .reserve_slot()
                 .map_err(|_| Box::new(ExaError::Blocking("destination host is full")))?;
+
+            for back_link in to_host.links.values_mut() {
+                if back_link.to_host == start_host {
+                    back_link.traversed_this_cycle = true;
+                }
+            }
 
             l.traversed_this_cycle = true;
             self.host = l.to_host.clone();
         }
 
-        h.borrow_mut().free_slot();
+        start_host.borrow_mut().free_slot();
 
         Ok(())
     }
@@ -67,13 +77,9 @@ impl<'a> Exa<'a> {
         };
 
         match dest {
-            Target::Literal(_) => {
-                return Err(ExaError::Fatal("cannot copy to literal").into());
-            }
+            Target::Literal(_) => Err(ExaError::Fatal("cannot copy to literal").into()),
             Target::Register(r) => self.write_register(r, src_value),
-        };
-
-        Ok(())
+        }
     }
 
     fn read_register(&self, r_specifier: &str) -> Result<i32, Box<dyn Error>> {
