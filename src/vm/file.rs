@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct File {
     id: u32,
     contents: Vec<i32>,

@@ -6,13 +6,14 @@ use std::fmt;
 use std::rc::Rc;
 
 use super::super::parse::parse_text;
+use super::error::ExaError;
 use super::file::File;
 use super::instruction::Instruction;
 use super::register::Register;
 use super::Permissions;
 use super::{Host, Shared, VM};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 struct Registers {
     x: Shared<Register>,
     t: Shared<Register>,
@@ -52,7 +53,7 @@ impl Registers {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 enum Mode {
     Local,
     Global,
@@ -71,6 +72,12 @@ pub struct Exa<'a> {
     pub error: Option<Box<dyn Error>>,
 }
 
+impl PartialEq for Exa<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
+}
+
 impl<'a> Exa<'a> {
     /// Spawn an Exa in the specified Host, if there is available space.
     pub fn spawn(
@@ -79,6 +86,7 @@ impl<'a> Exa<'a> {
         name: String,
         script: &str,
     ) -> Result<Shared<Exa<'a>>, Box<dyn Error>> {
+        // TODO: VM check on name uniqueness
         host.borrow_mut().reserve_slot()?;
         let e = Rc::new(RefCell::new(Exa {
             name,
@@ -93,6 +101,19 @@ impl<'a> Exa<'a> {
         }));
         vm.register_exa(e.clone());
         Ok(e)
+    }
+
+    pub fn is_fatal(&self) -> bool {
+        match &self.error {
+            None => false,
+            Some(e) => match e.downcast_ref::<ExaError>() {
+                Some(e) => match *e {
+                    ExaError::Fatal(_) => true,
+                    _ => false,
+                },
+                _ => false,
+            },
+        }
     }
 }
 

@@ -16,6 +16,7 @@ impl<'a> Exa<'a> {
         let result = match &self.instructions[self.pc].clone() {
             Instruction::Link(ref dest) => self.link(dest),
             Instruction::Copy(ref src, ref dest) => self.copy(src, dest),
+            Instruction::Halt => Err(ExaError::Fatal("explicit halt").into()),
             Instruction::Noop => Ok(()),
             _ => Ok(()),
         };

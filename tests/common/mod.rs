@@ -84,4 +84,18 @@ impl<'a> TestBench<'a> {
         let e = exa.borrow();
         assert!(e.error.is_none());
     }
+
+    pub fn assert_alive(&self, exa: &Shared<Exa<'a>>) {
+        for test_exa in self.vm.borrow().exas.iter() {
+            if test_exa == exa {
+                return;
+            }
+        }
+        panic!("exa is not alive")
+    }
+    pub fn assert_dead(&self, exa: &Shared<Exa<'a>>) {
+        for test_exa in self.vm.borrow().exas.iter() {
+            assert_ne!(test_exa, exa);
+        }
+    }
 }
