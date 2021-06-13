@@ -1,16 +1,23 @@
 extern crate exa;
 
 use std::cell::RefCell;
+use std::fmt;
 use std::rc::Rc;
 
 use exa::vm::error::ExaError;
-use exa::vm::exa::Exa;
+use exa::vm::exa::{Exa, Mode};
 use exa::vm::register::Register;
 use exa::vm::{Host, Permissions, Shared, VM};
 
 pub struct TestBench<'a> {
     vm: Shared<VM<'a>>,
     spawned: usize,
+}
+
+impl fmt::Display for TestBench<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.vm.borrow())
+    }
 }
 
 impl<'a> TestBench<'a> {
@@ -48,12 +55,29 @@ impl<'a> TestBench<'a> {
         Exa::spawn(&mut self.vm.clone().borrow_mut(), host, name, script).unwrap()
     }
 
+    /// Spawn an Exa in the first host, with all available options.
+    pub fn exa_custom(&mut self, script: &str, mode: Mode) -> Shared<Exa<'a>> {
+        let host = self.vm.borrow().hosts.get("start").unwrap().clone();
+        let mut name = String::from("x");
+        name.push_str(&self.spawned.to_string());
+        self.spawned += 1;
+        let e = Exa::spawn(&mut self.vm.clone().borrow_mut(), host, name, script).unwrap();
+        e.borrow_mut().mode = mode;
+        e
+    }
+
     pub fn run_cycle(&mut self) {
+        println!("{}", self);
         self.vm.borrow_mut().run_cycle()
     }
 
     pub fn assert_position(&self, exa: &Shared<Exa<'a>>, hostname: &str) {
         assert_eq!(exa.borrow().host.borrow().name, hostname);
+    }
+
+    pub fn assert_exa_register(&self, exa: &Shared<Exa<'a>>, specifier: &str, value: i32) {
+        let v = exa.borrow_mut().read_register(specifier).unwrap();
+        assert_eq!(v, value);
     }
 
     pub fn assert_fatal_error(&self, exa: &Shared<Exa<'a>>) {
@@ -80,9 +104,25 @@ impl<'a> TestBench<'a> {
         }
     }
 
+    pub fn assert_freezing_error(&self, exa: &Shared<Exa<'a>>) {
+        let e = exa.borrow();
+        let error = e.error.as_ref().unwrap();
+        match error.downcast_ref::<ExaError>() {
+            Some(e) => match *e {
+                ExaError::Freezing(_) => (),
+                _ => panic!("expected freezing error, got {}", e),
+            },
+            _ => panic!("expected freezing error, got {}", e),
+        }
+    }
+
     pub fn assert_no_error(&self, exa: &Shared<Exa<'a>>) {
         let e = exa.borrow();
-        assert!(e.error.is_none());
+        assert!(
+            e.error.is_none(),
+            "expected no error, got {}",
+            e.error.as_ref().unwrap()
+        );
     }
 
     pub fn assert_alive(&self, exa: &Shared<Exa<'a>>) {

@@ -12,7 +12,6 @@ fn basic_link() {
     bench.assert_position(&e, "end");
     bench.run_cycle();
     bench.assert_position(&e, "start");
-    bench.assert_no_error(&e);
 }
 
 #[test]
@@ -38,7 +37,6 @@ fn link_from_exa_register() {
     bench.assert_position(&e, "end");
     bench.run_cycle();
     bench.assert_position(&e, "start");
-    bench.assert_no_error(&e);
 }
 
 #[test]
@@ -50,7 +48,6 @@ fn link_from_hardware_register() {
     bench.run_cycle();
     bench.run_cycle();
     bench.assert_position(&e, "end");
-    bench.assert_no_error(&e);
 }
 
 #[test]
@@ -65,7 +62,6 @@ fn one_directional_blocking_bandwidth() {
     bench.assert_blocking_error(&e2);
     bench.run_cycle();
     bench.assert_position(&e2, "end");
-    bench.assert_no_error(&e2);
 }
 
 #[test]
@@ -83,5 +79,4 @@ fn two_directional_blocking_bandwidth() {
     bench.assert_blocking_error(&e2);
     bench.run_cycle();
     bench.assert_position(&e2, "start");
-    bench.assert_no_error(&e2);
 }

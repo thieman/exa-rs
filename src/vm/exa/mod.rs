@@ -6,12 +6,15 @@ use std::fmt;
 use std::rc::Rc;
 
 use super::super::parse::parse_text;
+use super::bus::MessageBus;
 use super::error::ExaError;
 use super::file::File;
 use super::instruction::Instruction;
 use super::register::Register;
 use super::Permissions;
 use super::{Host, Shared, VM};
+
+use cycle::CycleResult;
 
 #[derive(Debug, PartialEq, Eq)]
 struct Registers {
@@ -54,7 +57,7 @@ impl Registers {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-enum Mode {
+pub enum Mode {
     Local,
     Global,
 }
@@ -65,11 +68,13 @@ pub struct Exa<'a> {
     registers: Registers,
     pc: usize,
     instructions: Vec<Instruction>,
-    mode: Mode,
+    pub mode: Mode,
     file_pointer: u16,
     file: Option<Rc<File>>,
+    global_bus: Shared<MessageBus>,
     pub host: Shared<Host<'a>>,
     pub error: Option<Box<dyn Error>>,
+    result: CycleResult,
 }
 
 impl PartialEq for Exa<'_> {
@@ -77,6 +82,8 @@ impl PartialEq for Exa<'_> {
         self.name == other.name
     }
 }
+
+impl Eq for Exa<'_> {}
 
 impl<'a> Exa<'a> {
     /// Spawn an Exa in the specified Host, if there is available space.
@@ -96,8 +103,10 @@ impl<'a> Exa<'a> {
             mode: Mode::Global,
             file_pointer: 0,
             file: None,
+            global_bus: vm.bus.clone(),
             host: host,
             error: None,
+            result: CycleResult::new(),
         }));
         vm.register_exa(e.clone());
         Ok(e)
@@ -115,13 +124,26 @@ impl<'a> Exa<'a> {
             },
         }
     }
+
+    pub fn is_frozen(&self) -> bool {
+        match &self.error {
+            None => false,
+            Some(e) => match e.downcast_ref::<ExaError>() {
+                Some(e) => match *e {
+                    ExaError::Freezing(_) => true,
+                    _ => false,
+                },
+                _ => false,
+            },
+        }
+    }
 }
 
 impl fmt::Display for Exa<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Exa {}", self.name);
         if let Some(e) = &self.error {
-            write!(f, " (error: {})", e);
+            write!(f, " pc:{} (error: {})", self.pc, e);
         }
         Ok(())
     }

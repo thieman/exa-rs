@@ -9,9 +9,11 @@ use std::rc::Rc;
 use itertools::Itertools;
 
 use self::exa::Exa;
+use bus::MessageBus;
 use error::ExaError;
 use register::Register;
 
+pub mod bus;
 pub mod cycle;
 pub mod error;
 pub mod exa;
@@ -21,7 +23,7 @@ pub mod register;
 
 pub type Shared<T> = Rc<RefCell<T>>;
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug)]
 pub struct Host<'a> {
     pub name: String,
 
@@ -37,7 +39,17 @@ pub struct Host<'a> {
     pub links: HashMap<i32, HostLink<'a>>,
 
     pub registers: HashMap<String, Shared<Register>>,
+
+    pub bus: MessageBus,
 }
+
+impl PartialEq for Host<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
+}
+
+impl Eq for Host<'_> {}
 
 impl<'a> Host<'_> {
     pub fn new(name: String, capacity: usize) -> Host<'a> {
@@ -47,6 +59,7 @@ impl<'a> Host<'_> {
             occupied: 0,
             links: HashMap::new(),
             registers: HashMap::new(),
+            bus: MessageBus::new(),
         }
     }
     pub fn new_shared(name: String, capacity: usize) -> Shared<Host<'a>> {
@@ -120,6 +133,8 @@ pub struct VM<'a> {
     pub hosts: HashMap<String, Shared<Host<'a>>>,
 
     pub exas: Vec<Shared<Exa<'a>>>,
+
+    pub bus: Shared<MessageBus>,
 }
 
 impl<'a> VM<'a> {
@@ -128,6 +143,7 @@ impl<'a> VM<'a> {
             cycle: 0,
             hosts: HashMap::new(),
             exas: Vec::new(),
+            bus: Rc::new(RefCell::new(MessageBus::new())),
         }
     }
     pub fn add_host(&mut self, host: Shared<Host<'a>>) {
@@ -148,6 +164,14 @@ impl<'a> VM<'a> {
     }
     pub fn register_exa(&mut self, exa: Shared<Exa<'a>>) {
         self.exas.push(exa);
+    }
+    pub fn get_exa(&self, name: &str) -> Shared<Exa<'a>> {
+        for e in self.exas.iter() {
+            if e.borrow().name == name {
+                return e.clone();
+            }
+        }
+        panic!("unknown exa {}", name)
     }
 }
 

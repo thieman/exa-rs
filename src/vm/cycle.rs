@@ -23,8 +23,26 @@ impl<'a> VM<'a> {
             }
         }
 
-        for exa in self.exas.iter() {
-            exa.borrow_mut().run_cycle();
+        // Run message buses
+        self.bus.borrow_mut().run_cycle();
+        for host in self.hosts.values_mut() {
+            host.borrow_mut().bus.run_cycle();
+        }
+
+        // Run EXAs
+        let mut runnable = self.exas.clone();
+        while runnable.len() != 0 {
+            let exa = runnable.remove(0);
+            let mut exa_mut = exa.borrow_mut();
+            let result = exa_mut.run_cycle();
+
+            if let Some(e) = &result.unfreeze_exa {
+                let to_unfreeze = self.get_exa(e);
+                to_unfreeze.borrow_mut().unfreeze();
+                if !to_unfreeze.borrow_mut().is_fatal() {
+                    runnable.push(to_unfreeze);
+                }
+            }
         }
 
         self.cycle += 1;

@@ -4,14 +4,25 @@ use super::super::error::ExaError;
 use super::super::instruction::{Instruction, Target};
 use super::super::register::Register;
 use super::super::{Permissions, Shared};
-use super::Exa;
+use super::{Exa, Mode};
+
+/// Used to report any information from an EXA's cycle run
+/// back up the chain to the VM.
+#[derive(Debug, PartialEq, Eq)]
+pub struct CycleResult {
+    pub unfreeze_exa: Option<String>,
+}
+
+impl CycleResult {
+    pub fn new() -> CycleResult {
+        CycleResult { unfreeze_exa: None }
+    }
+}
 
 impl<'a> Exa<'a> {
-    pub fn run_cycle(&mut self) {
-        if self.pc > self.instructions.len() - 1 {
-            self.error = Some(ExaError::Fatal("out of instructions").into());
-            return;
-        }
+    pub fn run_cycle(&mut self) -> &CycleResult {
+        // Reset result
+        self.result = CycleResult::new();
 
         let result = match &self.instructions[self.pc].clone() {
             Instruction::Link(ref dest) => self.link(dest),
@@ -28,6 +39,24 @@ impl<'a> Exa<'a> {
 
         if self.error.is_none() {
             self.pc += 1;
+
+            if self.pc > self.instructions.len() - 1 {
+                self.error = Some(ExaError::Fatal("out of instructions").into());
+            }
+        }
+
+        return &self.result;
+    }
+
+    pub fn unfreeze(&mut self) {
+        if !self.is_frozen() {
+            panic!("cannot call unfreeze, exa is not frozen");
+        }
+
+        self.error = None;
+        self.pc += 1;
+        if self.pc > self.instructions.len() - 1 {
+            self.error = Some(ExaError::Fatal("out of instructions").into());
         }
     }
 
@@ -83,7 +112,11 @@ impl<'a> Exa<'a> {
         }
     }
 
-    fn read_register(&self, r_specifier: &str) -> Result<i32, Box<dyn Error>> {
+    pub fn read_register(&mut self, r_specifier: &str) -> Result<i32, Box<dyn Error>> {
+        if r_specifier == "m" {
+            return self.read_from_bus();
+        }
+
         let r = self.resolve_register(r_specifier)?;
         let b = r.borrow();
 
@@ -98,7 +131,10 @@ impl<'a> Exa<'a> {
         }
     }
 
-    fn write_register(&self, r_specifier: &str, value: i32) -> Result<(), Box<dyn Error>> {
+    fn write_register(&mut self, r_specifier: &str, value: i32) -> Result<(), Box<dyn Error>> {
+        if r_specifier == "m" {
+            return self.write_to_bus(value);
+        }
         let r = self.resolve_register(r_specifier)?;
         let mut b = r.borrow_mut();
 
@@ -112,9 +148,26 @@ impl<'a> Exa<'a> {
             _ => (),
         }
 
-        // TODO: Special registers
         b.value = value;
         Ok(())
+    }
+
+    pub fn read_from_bus(&mut self) -> Result<i32, Box<dyn Error>> {
+        let message = match self.mode {
+            Mode::Global => self.global_bus.borrow_mut().read(),
+            Mode::Local => self.host.borrow_mut().bus.read(),
+        }?;
+
+        self.result.unfreeze_exa = Some(message.sender);
+
+        Ok(message.value)
+    }
+
+    pub fn write_to_bus(&mut self, value: i32) -> Result<(), Box<dyn Error>> {
+        match self.mode {
+            Mode::Global => self.global_bus.borrow_mut().write(self, value),
+            Mode::Local => self.host.borrow_mut().bus.write(self, value),
+        }
     }
 
     fn resolve_register(&self, r_specifier: &str) -> Result<Shared<Register>, Box<dyn Error>> {

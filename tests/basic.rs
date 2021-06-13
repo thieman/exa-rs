@@ -24,9 +24,6 @@ fn test_out_of_instructions() {
     bench.assert_alive(&e);
     bench.run_cycle();
     bench.assert_alive(&e);
-    bench.assert_no_error(&e);
-    bench.run_cycle();
-    bench.assert_alive(&e);
     bench.assert_fatal_error(&e);
     bench.run_cycle();
     bench.assert_dead(&e);
