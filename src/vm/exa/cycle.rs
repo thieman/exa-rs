@@ -6,6 +6,18 @@ use super::super::register::Register;
 use super::super::{Permissions, Shared};
 use super::{Exa, Mode};
 
+fn clamp(value: i32) -> i32 {
+    if value > 9999 {
+        9999
+    } else if value < -9999 {
+        -9999
+    } else {
+        value
+    }
+}
+
+type ExaResult = Result<(), Box<dyn Error>>;
+
 /// Used to report any information from an EXA's cycle run
 /// back up the chain to the VM.
 #[derive(Debug, PartialEq, Eq)]
@@ -27,6 +39,10 @@ impl<'a> Exa<'a> {
         let result = match &self.instructions[self.pc].clone() {
             Instruction::Link(ref dest) => self.link(dest),
             Instruction::Copy(ref src, ref dest) => self.copy(src, dest),
+            Instruction::Addi(ref left, ref right, ref dest) => self.addi(left, right, dest),
+            Instruction::Subi(ref left, ref right, ref dest) => self.subi(left, right, dest),
+            Instruction::Muli(ref left, ref right, ref dest) => self.muli(left, right, dest),
+            Instruction::Divi(ref left, ref right, ref dest) => self.divi(left, right, dest),
             Instruction::Halt => Err(ExaError::Fatal("explicit halt").into()),
             Instruction::Noop => Ok(()),
             _ => Ok(()),
@@ -60,11 +76,8 @@ impl<'a> Exa<'a> {
         }
     }
 
-    fn link(&mut self, dest: &Target) -> Result<(), Box<dyn Error>> {
-        let link_id = match dest {
-            Target::Literal(l) => *l,
-            Target::Register(r) => self.read_register(r)?,
-        };
+    fn link(&mut self, dest: &Target) -> ExaResult {
+        let link_id = self.read_target(dest)?;
 
         let start_host = self.host.clone();
         {
@@ -100,15 +113,60 @@ impl<'a> Exa<'a> {
         Ok(())
     }
 
-    fn copy(&mut self, src: &Target, dest: &Target) -> Result<(), Box<dyn Error>> {
-        let src_value = match src {
-            Target::Literal(l) => *l,
-            Target::Register(r) => self.read_register(r)?,
-        };
+    fn copy(&mut self, src: &Target, dest: &Target) -> ExaResult {
+        let src_value = self.read_target(src)?;
 
         match dest {
-            Target::Literal(_) => Err(ExaError::Fatal("cannot copy to literal").into()),
+            Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
             Target::Register(r) => self.write_register(r, src_value),
+        }
+    }
+
+    fn addi(&mut self, left: &Target, right: &Target, dest: &Target) -> ExaResult {
+        let value = self.read_target(left)? + self.read_target(right)?;
+
+        match dest {
+            Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
+            Target::Register(r) => self.write_register(r, clamp(value)),
+        }
+    }
+
+    fn subi(&mut self, left: &Target, right: &Target, dest: &Target) -> ExaResult {
+        let value = self.read_target(left)? - self.read_target(right)?;
+
+        match dest {
+            Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
+            Target::Register(r) => self.write_register(r, clamp(value)),
+        }
+    }
+
+    fn muli(&mut self, left: &Target, right: &Target, dest: &Target) -> ExaResult {
+        let value = self.read_target(left)? * self.read_target(right)?;
+
+        match dest {
+            Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
+            Target::Register(r) => self.write_register(r, clamp(value)),
+        }
+    }
+
+    fn divi(&mut self, left: &Target, right: &Target, dest: &Target) -> ExaResult {
+        let right = self.read_target(right)?;
+        if right == 0 {
+            return Err(ExaError::Fatal("divide by zero").into());
+        }
+
+        let value = self.read_target(left)? / right;
+
+        match dest {
+            Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
+            Target::Register(r) => self.write_register(r, clamp(value)),
+        }
+    }
+
+    fn read_target(&mut self, t: &Target) -> Result<i32, Box<dyn Error>> {
+        match t {
+            Target::Literal(l) => Ok(*l),
+            Target::Register(r) => self.read_register(r),
         }
     }
 
@@ -131,7 +189,7 @@ impl<'a> Exa<'a> {
         }
     }
 
-    fn write_register(&mut self, r_specifier: &str, value: i32) -> Result<(), Box<dyn Error>> {
+    fn write_register(&mut self, r_specifier: &str, value: i32) -> ExaResult {
         if r_specifier == "m" {
             return self.write_to_bus(value);
         }
@@ -163,7 +221,7 @@ impl<'a> Exa<'a> {
         Ok(message.value)
     }
 
-    pub fn write_to_bus(&mut self, value: i32) -> Result<(), Box<dyn Error>> {
+    pub fn write_to_bus(&mut self, value: i32) -> ExaResult {
         match self.mode {
             Mode::Global => self.global_bus.borrow_mut().write(self, value),
             Mode::Local => self.host.borrow_mut().bus.write(self, value),
