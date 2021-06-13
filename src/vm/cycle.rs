@@ -1,4 +1,5 @@
-use super::VM;
+use super::exa::Exa;
+use super::{Shared, VM};
 
 impl<'a> VM<'a> {
     pub fn run_cycle(&mut self) {
@@ -30,7 +31,13 @@ impl<'a> VM<'a> {
         }
 
         // Run EXAs
-        let mut runnable = self.exas.clone();
+        let mut runnable: Vec<Shared<Exa>> = self
+            .exas
+            .clone()
+            .into_iter()
+            .filter(|e| !e.borrow().is_frozen())
+            .collect();
+
         while runnable.len() != 0 {
             let exa = runnable.remove(0);
             let mut exa_mut = exa.borrow_mut();
