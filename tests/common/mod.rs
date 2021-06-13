@@ -55,9 +55,9 @@ impl<'a> TestBench<'a> {
         Exa::spawn(&mut self.vm.clone().borrow_mut(), host, name, script).unwrap()
     }
 
-    /// Spawn an Exa in the first host, with all available options.
-    pub fn exa_custom(&mut self, script: &str, mode: Mode) -> Shared<Exa<'a>> {
-        let host = self.vm.borrow().hosts.get("start").unwrap().clone();
+    /// Spawn an Exa, with all available options.
+    pub fn exa_custom(&mut self, script: &str, host: &str, mode: Mode) -> Shared<Exa<'a>> {
+        let host = self.vm.borrow().hosts.get(host).unwrap().clone();
         let mut name = String::from("x");
         name.push_str(&self.spawned.to_string());
         self.spawned += 1;
