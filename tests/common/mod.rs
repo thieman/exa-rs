@@ -77,7 +77,7 @@ impl<'a> TestBench<'a> {
 
     pub fn assert_exa_register(&self, exa: &Shared<Exa<'a>>, specifier: &str, value: i32) {
         let v = exa.borrow_mut().read_register(specifier).unwrap();
-        assert_eq!(v, value);
+        assert_eq!(v, value, "wanted {} got {}", value, v);
     }
 
     pub fn assert_fatal_error(&self, exa: &Shared<Exa<'a>>) {

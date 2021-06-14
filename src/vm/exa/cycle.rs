@@ -16,6 +16,26 @@ fn clamp(value: i32) -> i32 {
     }
 }
 
+/// Splits a value into a vec of its digits. Throws away the sign, and
+/// pads so that there are always exactly 4 digits.
+fn int_to_digits(value: i32) -> Vec<u32> {
+    let mut value_string = value.abs().to_string();
+
+    if value_string.len() < 4 {
+        let mut new_string = String::from("");
+        for _ in 0..4 - value_string.len() {
+            new_string.push_str("0");
+        }
+        new_string.push_str(&value_string);
+        value_string = new_string;
+    }
+
+    value_string
+        .chars()
+        .map(|d| d.to_digit(10).unwrap())
+        .collect::<Vec<u32>>()
+}
+
 type ExaResult = Result<(), Box<dyn Error>>;
 
 /// Used to report any information from an EXA's cycle run
@@ -33,7 +53,7 @@ impl CycleResult {
 
 impl<'a> Exa<'a> {
     pub fn run_cycle(&mut self) -> &CycleResult {
-        // Reset result
+        // Reset result struct to pass up to VM
         self.result = CycleResult::new();
 
         let result = match &self.instructions[self.pc].clone() {
@@ -43,6 +63,8 @@ impl<'a> Exa<'a> {
             Instruction::Subi(ref left, ref right, ref dest) => self.subi(left, right, dest),
             Instruction::Muli(ref left, ref right, ref dest) => self.muli(left, right, dest),
             Instruction::Divi(ref left, ref right, ref dest) => self.divi(left, right, dest),
+            Instruction::Modi(ref left, ref right, ref dest) => self.modi(left, right, dest),
+            Instruction::Swiz(ref input, ref mask, ref dest) => self.swiz(input, mask, dest),
             Instruction::Halt => Err(ExaError::Fatal("explicit halt").into()),
             Instruction::Noop => Ok(()),
             _ => Ok(()),
@@ -163,6 +185,51 @@ impl<'a> Exa<'a> {
         }
     }
 
+    fn modi(&mut self, left: &Target, right: &Target, dest: &Target) -> ExaResult {
+        let right = self.read_target(right)?;
+        if right == 0 {
+            return Err(ExaError::Fatal("divide by zero").into());
+        }
+
+        let value = self.read_target(left)? % right;
+
+        match dest {
+            Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
+            Target::Register(r) => self.write_register(r, clamp(value)),
+        }
+    }
+
+    fn swiz(&mut self, input: &Target, mask: &Target, dest: &Target) -> ExaResult {
+        let mut value: i32 = 0;
+        let input_value = self.read_target(input)?;
+        let mask_value = self.read_target(mask)?;
+
+        let mut input_digits = int_to_digits(input_value);
+        input_digits.reverse();
+        let mask_digits = int_to_digits(mask_value);
+
+        for (idx, m_digit) in mask_digits.into_iter().enumerate() {
+            match m_digit {
+                1..=4 => {
+                    let power = ((idx as i32) - 3).abs() as u32;
+                    let incr = u32::pow(10, power) * input_digits[m_digit as usize - 1];
+                    value += incr as i32;
+                }
+                0 | 5..=9 => (),
+                _ => panic!("unexpected digit"),
+            }
+        }
+
+        if (input_value < 0) ^ (mask_value < 0) {
+            value *= -1;
+        }
+
+        match dest {
+            Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
+            Target::Register(r) => self.write_register(r, value),
+        }
+    }
+
     fn read_target(&mut self, t: &Target) -> Result<i32, Box<dyn Error>> {
         match t {
             Target::Literal(l) => Ok(*l),
@@ -262,5 +329,20 @@ impl<'a> Exa<'a> {
             _ => return Err(ExaError::Fatal("attempted to access unknown exa register").into()),
         };
         Ok(r)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_digits() {
+        assert_eq!(int_to_digits(1234), vec![1, 2, 3, 4]);
+        assert_eq!(int_to_digits(0), vec![0, 0, 0, 0]);
+        assert_eq!(int_to_digits(8), vec![0, 0, 0, 8]);
+        assert_eq!(int_to_digits(56), vec![0, 0, 5, 6]);
+        assert_eq!(int_to_digits(123), vec![0, 1, 2, 3]);
+        assert_eq!(int_to_digits(-9876), vec![9, 8, 7, 6]);
     }
 }
