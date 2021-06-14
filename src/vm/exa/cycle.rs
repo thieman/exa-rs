@@ -65,8 +65,18 @@ impl<'a> Exa<'a> {
             Instruction::Divi(ref left, ref right, ref dest) => self.divi(left, right, dest),
             Instruction::Modi(ref left, ref right, ref dest) => self.modi(left, right, dest),
             Instruction::Swiz(ref input, ref mask, ref dest) => self.swiz(input, mask, dest),
+            Instruction::Mode => {
+                match self.mode {
+                    Mode::Local => self.mode = Mode::Global,
+                    Mode::Global => self.mode = Mode::Local,
+                }
+                Ok(())
+            }
+            Instruction::VoidM => self.read_register("m").map(|_| ()),
             Instruction::Halt => Err(ExaError::Fatal("explicit halt").into()),
             Instruction::Noop => Ok(()),
+            Instruction::Mark(_) => panic!("marks should have been preprocessed out"),
+            Instruction::Host(_) => Ok(()),
             _ => Ok(()),
         };
 

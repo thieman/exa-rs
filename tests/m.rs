@@ -100,3 +100,40 @@ fn test_multiple_locals() {
     bench.assert_exa_register(&e2, "x", 1);
     bench.assert_exa_register(&e4, "x", 2);
 }
+
+#[test]
+fn test_mode() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("noop\n copy 1 m\n");
+    let e2 = bench.exa_custom("mode\n copy m x\n", "start", Mode::Local);
+
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.assert_freezing_error(&e1);
+    bench.assert_blocking_error(&e2);
+    bench.run_cycle();
+    bench.assert_fatal_error(&e1);
+    bench.assert_fatal_error(&e2);
+    bench.assert_exa_register(&e2, "x", 1);
+    bench.run_cycle();
+    bench.assert_dead(&e1);
+    bench.assert_dead(&e2);
+}
+
+#[test]
+fn test_void_m() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("copy 1 m\n");
+    let e2 = bench.exa("void m\n");
+
+    bench.run_cycle();
+    bench.assert_freezing_error(&e1);
+    bench.assert_blocking_error(&e2);
+    bench.run_cycle();
+    bench.assert_fatal_error(&e1);
+    bench.assert_fatal_error(&e2);
+    bench.assert_exa_register(&e2, "x", 0);
+    bench.run_cycle();
+    bench.assert_dead(&e1);
+    bench.assert_dead(&e2);
+}
