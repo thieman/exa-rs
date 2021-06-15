@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 use std::rc::Rc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::super::parse::parse_text;
 use super::bus::MessageBus;
@@ -17,7 +18,7 @@ use super::{Host, Shared, VM};
 
 use cycle::CycleResult;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct Registers {
     x: Shared<Register>,
     t: Shared<Register>,
@@ -55,9 +56,20 @@ impl Registers {
             co: Register::new_shared(Permissions::ReadWrite, 0),
         }
     }
+
+    pub fn clone_for_repl(&self) -> Registers {
+        let r = self.clone();
+        r.gx.borrow_mut().value = 0;
+        r.gy.borrow_mut().value = 0;
+        r.gz.borrow_mut().value = 0;
+        r.gp.borrow_mut().value = 0;
+        r.ci.borrow_mut().value = 0;
+        r.co.borrow_mut().value = 0;
+        r
+    }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Mode {
     Local,
     Global,
@@ -65,6 +77,7 @@ pub enum Mode {
 
 #[derive(Debug)]
 pub struct Exa<'a> {
+    base_name: String,
     pub name: String,
     registers: Registers,
     pc: usize,
@@ -78,6 +91,7 @@ pub struct Exa<'a> {
     pub host: Shared<Host<'a>>,
     pub error: Option<Box<dyn Error>>,
     result: CycleResult,
+    spawn_counter: Rc<AtomicUsize>,
 }
 
 impl PartialEq for Exa<'_> {
@@ -101,6 +115,7 @@ impl<'a> Exa<'a> {
         let mut insts = parse_text(script).unwrap();
         let labels = Exa::extract_labels(&mut insts);
         let e = Rc::new(RefCell::new(Exa {
+            base_name: name.clone(),
             name,
             registers: Registers::new(),
             pc: 0,
@@ -113,9 +128,45 @@ impl<'a> Exa<'a> {
             host: host,
             error: None,
             result: CycleResult::new(),
+            spawn_counter: Rc::new(AtomicUsize::new(1)),
         }));
         vm.register_exa(e.clone());
         Ok(e)
+    }
+
+    pub fn inner_repl(
+        &self,
+        vm: &mut VM<'a>,
+        pc: usize,
+    ) -> Result<Shared<Exa<'a>>, Box<dyn Error>> {
+        self.host.borrow_mut().reserve_slot()?;
+
+        let e = Rc::new(RefCell::new(Exa {
+            base_name: self.base_name.clone(),
+            name: self.name_for_repl(),
+            registers: self.registers.clone_for_repl(),
+            pc,
+            instructions: self.instructions.clone(),
+            labels: self.labels.clone(),
+            mode: self.mode,
+            file_pointer: 0,
+            file: None,
+            global_bus: self.global_bus.clone(),
+            host: self.host.clone(),
+            error: None,
+            result: CycleResult::new(),
+            spawn_counter: self.spawn_counter.clone(),
+        }));
+        vm.register_exa(e.clone());
+        Ok(e)
+    }
+
+    fn name_for_repl(&self) -> String {
+        let num = self.spawn_counter.fetch_add(1, Ordering::Relaxed);
+        let mut name = self.base_name.clone();
+        name.push_str(":");
+        name.push_str(&num.to_string());
+        return name;
     }
 
     fn extract_labels(instructions: &mut Vec<Instruction>) -> HashMap<String, usize> {

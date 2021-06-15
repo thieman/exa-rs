@@ -67,6 +67,12 @@ impl<'a> TestBench<'a> {
         e
     }
 
+    /// Get an exa by its name. Useful for grabbing new EXAs that have been
+    /// spawned via REPL commands.
+    pub fn get_exa(&mut self, name: &str) -> Shared<Exa<'a>> {
+        self.vm.borrow_mut().get_exa(name)
+    }
+
     pub fn run_cycle(&mut self) {
         self.vm.borrow_mut().run_cycle();
         println!("{}", self);

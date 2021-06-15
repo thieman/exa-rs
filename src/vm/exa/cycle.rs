@@ -3,6 +3,7 @@ use std::error::Error;
 use super::super::error::ExaError;
 use super::super::instruction::{Comparator, Instruction, Target};
 use super::super::register::Register;
+use super::super::VM;
 use super::super::{Permissions, Shared};
 use super::{Exa, Mode};
 
@@ -52,7 +53,7 @@ impl CycleResult {
 }
 
 impl<'a> Exa<'a> {
-    pub fn run_cycle(&mut self) -> &CycleResult {
+    pub fn run_cycle(&mut self, vm: &mut VM<'a>) -> &CycleResult {
         // Reset result struct to pass up to VM
         self.result = CycleResult::new();
 
@@ -69,6 +70,7 @@ impl<'a> Exa<'a> {
             Instruction::Tjmp(ref label) => self.tjmp(label),
             Instruction::Fjmp(ref label) => self.fjmp(label),
             Instruction::Test(ref left, ref comp, ref right) => self.test(left, comp, right),
+            Instruction::Repl(ref label) => self.repl(vm, label),
             Instruction::Mode => {
                 match self.mode {
                     Mode::Local => self.mode = Mode::Global,
@@ -279,7 +281,17 @@ impl<'a> Exa<'a> {
             Comparator::LessThan => is_true = l < r,
         }
 
-        self.write_register("t", if is_true { 1 } else { 0 });
+        self.write_register("t", if is_true { 1 } else { 0 })?;
+        Ok(())
+    }
+
+    fn repl(&mut self, vm: &mut VM<'a>, label: &String) -> ExaResult {
+        let target_pc = match self.labels.get(label) {
+            Some(position) => Ok(*position),
+            _ => Err(Box::new(ExaError::Fatal("unknown label"))),
+        }?;
+
+        self.inner_repl(vm, target_pc)?;
         Ok(())
     }
 

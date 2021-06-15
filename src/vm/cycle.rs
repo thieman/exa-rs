@@ -41,7 +41,7 @@ impl<'a> VM<'a> {
         while runnable.len() != 0 {
             let exa = runnable.remove(0);
             let mut exa_mut = exa.borrow_mut();
-            let result = exa_mut.run_cycle();
+            let result = exa_mut.run_cycle(self);
 
             if let Some(e) = &result.unfreeze_exa {
                 let to_unfreeze = self.get_exa(e);
