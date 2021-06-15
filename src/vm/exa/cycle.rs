@@ -65,6 +65,9 @@ impl<'a> Exa<'a> {
             Instruction::Divi(ref left, ref right, ref dest) => self.divi(left, right, dest),
             Instruction::Modi(ref left, ref right, ref dest) => self.modi(left, right, dest),
             Instruction::Swiz(ref input, ref mask, ref dest) => self.swiz(input, mask, dest),
+            Instruction::Jump(ref label) => self.jump(label),
+            Instruction::Tjmp(ref label) => self.tjmp(label),
+            Instruction::Fjmp(ref label) => self.fjmp(label),
             Instruction::Mode => {
                 match self.mode {
                     Mode::Local => self.mode = Mode::Global,
@@ -238,6 +241,31 @@ impl<'a> Exa<'a> {
             Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
             Target::Register(r) => self.write_register(r, value),
         }
+    }
+
+    fn jump(&mut self, label: &String) -> ExaResult {
+        match self.labels.get(label) {
+            Some(position) => {
+                // Need to -1 because we will increase the PC
+                // when we return back to run_cycle
+                self.pc = *position - 1;
+                Ok(())
+            }
+            _ => Err(ExaError::Fatal("unknown label").into()),
+        }
+    }
+
+    fn tjmp(&mut self, label: &String) -> ExaResult {
+        if self.read_register("t")? != 0 {
+            return self.jump(label);
+        }
+        Ok(())
+    }
+    fn fjmp(&mut self, label: &String) -> ExaResult {
+        if self.read_register("t")? == 0 {
+            return self.jump(label);
+        }
+        Ok(())
     }
 
     fn read_target(&mut self, t: &Target) -> Result<i32, Box<dyn Error>> {

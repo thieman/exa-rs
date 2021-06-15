@@ -20,6 +20,7 @@ impl fmt::Display for TestBench<'_> {
     }
 }
 
+#[allow(dead_code)]
 impl<'a> TestBench<'a> {
     /// basic_vm provides a VM with two hosts, each with capacity 4.
     /// Host "start" is linked to host "end" via a 800<->-1 link. A
@@ -67,8 +68,8 @@ impl<'a> TestBench<'a> {
     }
 
     pub fn run_cycle(&mut self) {
+        self.vm.borrow_mut().run_cycle();
         println!("{}", self);
-        self.vm.borrow_mut().run_cycle()
     }
 
     pub fn assert_position(&self, exa: &Shared<Exa<'a>>, hostname: &str) {
