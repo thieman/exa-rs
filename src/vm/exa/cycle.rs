@@ -1,7 +1,7 @@
 use std::error::Error;
 
 use super::super::error::ExaError;
-use super::super::instruction::{Instruction, Target};
+use super::super::instruction::{Comparator, Instruction, Target};
 use super::super::register::Register;
 use super::super::{Permissions, Shared};
 use super::{Exa, Mode};
@@ -68,6 +68,7 @@ impl<'a> Exa<'a> {
             Instruction::Jump(ref label) => self.jump(label),
             Instruction::Tjmp(ref label) => self.tjmp(label),
             Instruction::Fjmp(ref label) => self.fjmp(label),
+            Instruction::Test(ref left, ref comp, ref right) => self.test(left, comp, right),
             Instruction::Mode => {
                 match self.mode {
                     Mode::Local => self.mode = Mode::Global,
@@ -265,6 +266,20 @@ impl<'a> Exa<'a> {
         if self.read_register("t")? == 0 {
             return self.jump(label);
         }
+        Ok(())
+    }
+
+    fn test(&mut self, left: &Target, comp: &Comparator, right: &Target) -> ExaResult {
+        let (l, r) = (self.read_target(left)?, self.read_target(right)?);
+
+        let is_true: bool;
+        match comp {
+            Comparator::Equal => is_true = l == r,
+            Comparator::GreaterThan => is_true = l > r,
+            Comparator::LessThan => is_true = l < r,
+        }
+
+        self.write_register("t", if is_true { 1 } else { 0 });
         Ok(())
     }
 
