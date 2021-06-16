@@ -30,6 +30,11 @@ impl<'a> VM<'a> {
             host.borrow_mut().bus.run_cycle();
         }
 
+        // Run KILLs. These seem to have a special execution order
+        // so they need to go before other EXA commands. KILLs are based
+        // on positioning at the start of the cycle, and if you get killed,
+        // you don't get to run anything else this cycle.
+
         // Run EXAs
         let mut runnable: Vec<Shared<Exa>> = self
             .exas
