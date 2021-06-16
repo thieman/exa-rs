@@ -31,3 +31,15 @@ fn test_chain_repl() {
     let e2 = bench.get_exa("x0:2");
     bench.assert_no_error(&e2);
 }
+
+#[test]
+fn test_repl_blocks_when_full() {
+    let mut bench = TestBench::basic_vm();
+    let _ = bench.exa("noop \n noop\n");
+    let _ = bench.exa("noop \n noop\n");
+    let _ = bench.exa("noop \n noop\n");
+    let e4 = bench.exa("mark start\n repl start\n");
+
+    bench.run_cycle();
+    bench.assert_blocking_error(&e4);
+}

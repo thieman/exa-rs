@@ -3,6 +3,7 @@ extern crate simple_error;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::error::Error;
 use std::fmt;
 use std::rc::Rc;
 
@@ -68,7 +69,7 @@ impl<'a> Host<'_> {
 
     /// Increments occupied by 1, if there is remaining capacity. Successful
     /// calls mean you need to free_slot later when you leave the Host.
-    pub fn reserve_slot(&mut self) -> Result<(), Box<ExaError<'a>>> {
+    pub fn reserve_slot(&mut self) -> Result<(), Box<dyn Error>> {
         if self.capacity <= self.occupied {
             return Err(ExaError::Blocking("host has no remaining capacity").into());
         }
