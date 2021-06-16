@@ -225,6 +225,16 @@ impl<'a> Exa<'a> {
         }
     }
 
+    pub fn will_test_mrd_this_cycle(&self) -> bool {
+        if self.pc >= self.instructions.len() {
+            return false;
+        }
+        match &self.instructions[self.pc] {
+            Instruction::TestMrd => true,
+            _ => false,
+        }
+    }
+
     pub fn descendant_of(&self, other: Shared<Exa<'a>>) -> bool {
         self.base_name == other.borrow().base_name && self.spawn_id > other.borrow().spawn_id
     }
@@ -236,11 +246,11 @@ impl<'a> Exa<'a> {
 
 impl fmt::Display for Exa<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Exa {}", self.name)?;
+        write!(f, "Exa {} pc:{}", self.name, self.pc)?;
         if let Some(e) = &self.error {
-            write!(f, " pc:{} (error: {})", self.pc, e)?;
+            write!(f, " (error: {})", e)?;
         }
-        if self.pc < self.instructions.len() - 1 {
+        if self.pc < self.instructions.len() {
             write!(f, "\t{:?}", self.instructions[self.pc])?;
         }
         Ok(())

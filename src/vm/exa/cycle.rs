@@ -84,8 +84,10 @@ impl<'a> Exa<'a> {
             Instruction::Mark(_) => panic!("marks should have been preprocessed out"),
             // host is unsupported because we don't support keywords. convert to noop
             Instruction::Host(_) => Ok(()),
-            // kills are handled in the VM's run_cycle
+            // kills are handled in the VM's run_cycle, before everything else
             Instruction::Kill => Ok(()),
+            // test mrd is handled in the VM's run_cycle, after everything else
+            Instruction::TestMrd => Ok(()),
             _ => Ok(()),
         };
 
@@ -296,6 +298,18 @@ impl<'a> Exa<'a> {
 
         self.inner_repl(vm, target_pc)?;
         Ok(())
+    }
+
+    /// TEST MRD is a special little snowflake and is run by the VM
+    /// after all other processing. It won't ever error, so we don't
+    /// return an ExaResult from it.
+    pub fn test_mrd(&mut self) {
+        let ready = match self.mode {
+            Mode::Global => self.global_bus.borrow().has_messages(),
+            Mode::Local => self.host.borrow().bus.has_messages(),
+        };
+        self.write_register("t", if ready { 1 } else { 0 })
+            .expect("error writing to T from test mrd");
     }
 
     fn read_target(&mut self, t: &Target) -> Result<i32, Box<dyn Error>> {

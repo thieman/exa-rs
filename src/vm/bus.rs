@@ -31,6 +31,10 @@ impl MessageBus {
         }
     }
 
+    pub fn has_messages(&self) -> bool {
+        self.messages.len() != 0
+    }
+
     pub fn read(&mut self) -> Result<Message, Box<dyn Error>> {
         if !self.read_available {
             return Err(ExaError::Blocking("no available read bandwidth on bus").into());

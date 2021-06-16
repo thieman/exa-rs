@@ -50,6 +50,17 @@ impl<'a> VM<'a> {
             }
         }
 
+        // Gather TEST MRDs, before they increment their pcs. TEST MRD seems
+        // like it needs to happen after everything
+        // else, since it'll return True even if, on that cycle, reading
+        // would have actually blocked. But the *next* cycle it won't block.
+        let test_mrds: Vec<Shared<Exa>> = self
+            .exas
+            .clone()
+            .into_iter()
+            .filter(|e| e.borrow().will_test_mrd_this_cycle())
+            .collect();
+
         // Run EXA cycles
         let mut runnable: Vec<Shared<Exa>> = self
             .exas
@@ -73,6 +84,11 @@ impl<'a> VM<'a> {
                     runnable.push(to_unfreeze);
                 }
             }
+        }
+
+        // Run the TEST MRDs from earlier.
+        for exa in test_mrds.iter() {
+            exa.borrow_mut().test_mrd();
         }
 
         self.cycle += 1;

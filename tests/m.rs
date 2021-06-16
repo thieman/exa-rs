@@ -7,7 +7,7 @@ use common::*;
 use exa::vm::exa::Mode;
 
 #[test]
-fn test_simple_m_passing() {
+fn simple_m_passing() {
     let mut bench = TestBench::basic_vm();
     let e1 = bench.exa("copy 1 m\n");
     let e2 = bench.exa("copy m x\n");
@@ -25,7 +25,7 @@ fn test_simple_m_passing() {
 }
 
 #[test]
-fn test_multi_mode_m_passing() {
+fn multi_mode_m_passing() {
     let mut bench = TestBench::basic_vm();
     let e1 = bench.exa("copy 1 m\n");
     let e2 = bench.exa("copy m x\n");
@@ -54,7 +54,7 @@ fn test_multi_mode_m_passing() {
 }
 
 #[test]
-fn test_exceeds_bandwidth_message_bus_global() {
+fn exceeds_bandwidth_message_bus_global() {
     let mut bench = TestBench::basic_vm();
     let e1 = bench.exa("copy 1 m\n");
     let e2 = bench.exa("copy m x\n");
@@ -80,7 +80,7 @@ fn test_exceeds_bandwidth_message_bus_global() {
 }
 
 #[test]
-fn test_multiple_locals() {
+fn multiple_locals() {
     let mut bench = TestBench::basic_vm();
     let e1 = bench.exa_custom("copy 1 m\n", "end", Mode::Local);
     let e2 = bench.exa_custom("copy m x\n", "end", Mode::Local);
@@ -102,7 +102,7 @@ fn test_multiple_locals() {
 }
 
 #[test]
-fn test_mode() {
+fn mode() {
     let mut bench = TestBench::basic_vm();
     let e1 = bench.exa("noop\n copy 1 m\n");
     let e2 = bench.exa_custom("mode\n copy m x\n", "start", Mode::Local);
@@ -121,7 +121,7 @@ fn test_mode() {
 }
 
 #[test]
-fn test_void_m() {
+fn void_m() {
     let mut bench = TestBench::basic_vm();
     let e1 = bench.exa("copy 1 m\n");
     let e2 = bench.exa("void m\n");
@@ -136,4 +136,44 @@ fn test_void_m() {
     bench.run_cycle();
     bench.assert_dead(&e1);
     bench.assert_dead(&e2);
+}
+
+#[test]
+fn test_mrd_immediately_available() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("copy 1 m\n noop\n");
+    let e2 = bench.exa("test mrd\n noop\n");
+
+    bench.run_cycle();
+    bench.assert_freezing_error(&e1);
+    bench.assert_no_error(&e2);
+    bench.assert_exa_register(&e2, "t", 1);
+}
+
+#[test]
+fn test_mrd_not_ready() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("copy -1 t\n test mrd\n noop\n");
+
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.assert_no_error(&e1);
+    bench.assert_exa_register(&e1, "t", 0);
+}
+
+#[test]
+fn test_mrd_after_read() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("copy 1 m\n noop\n");
+    let e2 = bench.exa("copy 1 m\n noop\n");
+    let e3 = bench.exa("noop\n copy m x\n noop\n");
+    let e4 = bench.exa("test mrd\n test mrd\n test mrd\n noop\n");
+
+    bench.run_cycle();
+    bench.assert_exa_register(&e4, "t", 1);
+    bench.run_cycle();
+    bench.assert_exa_register(&e3, "x", 1);
+    bench.assert_exa_register(&e4, "t", 1);
+    bench.run_cycle();
+    bench.assert_exa_register(&e4, "t", 1);
 }

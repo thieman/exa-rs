@@ -141,4 +141,13 @@ note we groovin";
             Err("cannot reference M register more than once in one instruction".into()),
         );
     }
+
+    #[test]
+    fn test_mrd() {
+        let s = "test mrd\n noop\n";
+        assert_eq!(
+            parse_text(s),
+            Ok(vec![Instruction::TestMrd, Instruction::Noop])
+        );
+    }
 }

@@ -34,7 +34,7 @@ fn kill_killers() {
 #[test]
 fn kill_prioritize_descendants() {
     let mut bench = TestBench::basic_vm();
-    let e1 = bench.exa("repl end\n kill\n mark end\n noop\n noop\n");
+    let _ = bench.exa("repl end\n kill\n mark end\n noop\n noop\n");
     let e2 = bench.exa("noop\n noop\n noop\n");
 
     bench.run_cycle();
@@ -51,7 +51,7 @@ fn kill_prioritize_ancestors() {
     let e2 = bench.exa("noop\n noop\n noop\n");
 
     bench.run_cycle();
-    let e3 = bench.get_exa("x0:1");
+    let _ = bench.get_exa("x0:1");
     bench.run_cycle();
     bench.assert_fatal_error(&e1);
     bench.assert_no_error(&e2);
