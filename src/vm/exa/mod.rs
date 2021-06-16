@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 use std::rc::Rc;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use super::super::parse::parse_text;
 use super::bus::MessageBus;
@@ -78,6 +78,7 @@ pub enum Mode {
 #[derive(Debug)]
 pub struct Exa<'a> {
     base_name: String,
+    spawn_id: u64,
     pub name: String,
     registers: Registers,
     pc: usize,
@@ -91,7 +92,7 @@ pub struct Exa<'a> {
     pub host: Shared<Host<'a>>,
     pub error: Option<Box<dyn Error>>,
     result: CycleResult,
-    spawn_counter: Rc<AtomicUsize>,
+    spawn_counter: Rc<AtomicU64>,
 }
 
 impl PartialEq for Exa<'_> {
@@ -116,6 +117,7 @@ impl<'a> Exa<'a> {
         let labels = Exa::extract_labels(&mut insts);
         let e = Rc::new(RefCell::new(Exa {
             base_name: name.clone(),
+            spawn_id: 0,
             name,
             registers: Registers::new(),
             pc: 0,
@@ -128,7 +130,7 @@ impl<'a> Exa<'a> {
             host: host,
             error: None,
             result: CycleResult::new(),
-            spawn_counter: Rc::new(AtomicUsize::new(1)),
+            spawn_counter: Rc::new(AtomicU64::new(1)),
         }));
         vm.register_exa(e.clone());
         Ok(e)
@@ -141,9 +143,12 @@ impl<'a> Exa<'a> {
     ) -> Result<Shared<Exa<'a>>, Box<dyn Error>> {
         self.host.borrow_mut().reserve_slot()?;
 
+        let (name, spawn_id) = self.name_and_id_for_repl();
+
         let e = Rc::new(RefCell::new(Exa {
             base_name: self.base_name.clone(),
-            name: self.name_for_repl(),
+            spawn_id: spawn_id,
+            name: name,
             registers: self.registers.clone_for_repl(),
             pc,
             instructions: self.instructions.clone(),
@@ -161,12 +166,12 @@ impl<'a> Exa<'a> {
         Ok(e)
     }
 
-    fn name_for_repl(&self) -> String {
+    fn name_and_id_for_repl(&self) -> (String, u64) {
         let num = self.spawn_counter.fetch_add(1, Ordering::Relaxed);
         let mut name = self.base_name.clone();
         name.push_str(":");
         name.push_str(&num.to_string());
-        return name;
+        return (name, num);
     }
 
     fn extract_labels(instructions: &mut Vec<Instruction>) -> HashMap<String, usize> {
@@ -218,6 +223,14 @@ impl<'a> Exa<'a> {
             Instruction::Kill => true,
             _ => false,
         }
+    }
+
+    pub fn descendant_of(&self, other: Shared<Exa<'a>>) -> bool {
+        self.base_name == other.borrow().base_name && self.spawn_id > other.borrow().spawn_id
+    }
+
+    pub fn ancestor_of(&self, other: Shared<Exa<'a>>) -> bool {
+        self.base_name == other.borrow().base_name && self.spawn_id < other.borrow().spawn_id
     }
 }
 

@@ -90,11 +90,22 @@ impl<'a> VM<'a> {
     /// We take the first group that has any members, and pick a random
     /// as-of-yet unkilled member from it, then kill it.
     fn kill_target(&mut self, killer: Shared<Exa<'a>>) -> Option<Shared<Exa<'a>>> {
-        let other_killers: Vec<Shared<Exa<'a>>> = self
+        let k = killer.borrow();
+        let host_exas: Vec<Shared<Exa<'a>>> = self
             .exas
             .clone()
             .into_iter()
-            .filter(|e| *e.borrow() != *killer.borrow() && e.borrow().will_kill_this_cycle())
+            .filter(|e| *e.borrow() != *k && *e.borrow().host == *k.host)
+            .collect();
+
+        if host_exas.len() == 0 {
+            return None;
+        }
+
+        let other_killers: Vec<Shared<Exa<'a>>> = host_exas
+            .clone()
+            .into_iter()
+            .filter(|e| e.borrow().will_kill_this_cycle())
             .collect();
 
         if other_killers.len() != 0 {
@@ -102,6 +113,29 @@ impl<'a> VM<'a> {
             return Some(choice.clone());
         }
 
-        None
+        let descendants: Vec<Shared<Exa<'a>>> = host_exas
+            .clone()
+            .into_iter()
+            .filter(|e| e.borrow().descendant_of(killer.clone()))
+            .collect();
+
+        if descendants.len() != 0 {
+            let choice = descendants.choose(&mut rand::thread_rng()).unwrap();
+            return Some(choice.clone());
+        }
+
+        let ancestors: Vec<Shared<Exa<'a>>> = host_exas
+            .clone()
+            .into_iter()
+            .filter(|e| e.borrow().ancestor_of(killer.clone()))
+            .collect();
+
+        if ancestors.len() != 0 {
+            let choice = ancestors.choose(&mut rand::thread_rng()).unwrap();
+            return Some(choice.clone());
+        }
+
+        let choice = host_exas.choose(&mut rand::thread_rng()).unwrap();
+        Some(choice.clone())
     }
 }
