@@ -1,3 +1,6 @@
+use rand::seq::SliceRandom;
+
+use super::error::ExaError;
 use super::exa::Exa;
 use super::{Shared, VM};
 
@@ -34,13 +37,28 @@ impl<'a> VM<'a> {
         // so they need to go before other EXA commands. KILLs are based
         // on positioning at the start of the cycle, and if you get killed,
         // you don't get to run anything else this cycle.
+        let killers = self
+            .exas
+            .clone()
+            .into_iter()
+            .filter(|e| e.borrow().will_kill_this_cycle());
 
-        // Run EXAs
+        for killer in killers {
+            let kill_target = self.kill_target(killer);
+            if kill_target.is_some() {
+                kill_target.unwrap().borrow_mut().error = Some(ExaError::Fatal("killed").into());
+            }
+        }
+
+        // Run EXA cycles
         let mut runnable: Vec<Shared<Exa>> = self
             .exas
             .clone()
             .into_iter()
+            // Do not run frozen EXAs until something else thaws them
             .filter(|e| !e.borrow().is_frozen())
+            // Do not run EXAs that were just killed
+            .filter(|e| !e.borrow().is_fatal())
             .collect();
 
         while runnable.len() != 0 {
@@ -58,5 +76,32 @@ impl<'a> VM<'a> {
         }
 
         self.cycle += 1;
+    }
+
+    /// Kill targeting seems pretty complex, and I haven't been able to
+    /// fully reverse engineer it. We're going to try this for now and hope
+    /// we don't run into any programs that are actually relying on the
+    /// exact kill behavior in the retail game. Kill targets are prioritized
+    /// based on:
+    /// - whether they are also performing a KILL this turn
+    /// - whether they are in our EXA chain, and newer than us
+    /// - whether they are in our EXA chain, and older than us
+    /// - everyone else
+    /// We take the first group that has any members, and pick a random
+    /// as-of-yet unkilled member from it, then kill it.
+    fn kill_target(&mut self, killer: Shared<Exa<'a>>) -> Option<Shared<Exa<'a>>> {
+        let other_killers: Vec<Shared<Exa<'a>>> = self
+            .exas
+            .clone()
+            .into_iter()
+            .filter(|e| *e.borrow() != *killer.borrow() && e.borrow().will_kill_this_cycle())
+            .collect();
+
+        if other_killers.len() != 0 {
+            let choice = other_killers.choose(&mut rand::thread_rng()).unwrap();
+            return Some(choice.clone());
+        }
+
+        None
     }
 }

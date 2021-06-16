@@ -212,6 +212,13 @@ impl<'a> Exa<'a> {
             },
         }
     }
+
+    pub fn will_kill_this_cycle(&self) -> bool {
+        match &self.instructions[self.pc] {
+            Instruction::Kill => true,
+            _ => false,
+        }
+    }
 }
 
 impl fmt::Display for Exa<'_> {

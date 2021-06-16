@@ -82,7 +82,10 @@ impl<'a> Exa<'a> {
             Instruction::Halt => Err(ExaError::Fatal("explicit halt").into()),
             Instruction::Noop => Ok(()),
             Instruction::Mark(_) => panic!("marks should have been preprocessed out"),
+            // host is unsupported because we don't support keywords. convert to noop
             Instruction::Host(_) => Ok(()),
+            // kills are handled in the VM's run_cycle
+            Instruction::Kill => Ok(()),
             _ => Ok(()),
         };
 
