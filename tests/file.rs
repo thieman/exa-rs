@@ -73,6 +73,20 @@ fn file_void() {
 }
 
 #[test]
+fn file_command() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("make\n file x\n wipe\n make\n file x\n noop");
+
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.assert_exa_register(&e1, "x", 400);
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.assert_exa_register(&e1, "x", 401);
+}
+
+#[test]
 fn make_error() {
     let mut bench = TestBench::basic_vm();
     let e1 = bench.exa("make\n make\n noop\n");

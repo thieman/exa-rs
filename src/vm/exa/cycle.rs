@@ -88,6 +88,7 @@ impl<'a> Exa<'a> {
             Instruction::Halt => Err(ExaError::Fatal("explicit halt").into()),
             Instruction::Seek(ref target) => self.seek_file(target),
             Instruction::VoidF => self.void_file(),
+            Instruction::File(ref target) => self.file_command(target),
             Instruction::Noop => Ok(()),
             Instruction::Mark(_) => panic!("marks should have been preprocessed out"),
             // host is unsupported because we don't support keywords. convert to noop
@@ -403,6 +404,18 @@ impl<'a> Exa<'a> {
         f.contents.remove(self.file_pointer as usize);
 
         Ok(())
+    }
+
+    fn file_command(&mut self, target: &Target) -> ExaResult {
+        if self.file.is_none() {
+            return Err(ExaError::Fatal("no file is held").into());
+        }
+
+        let file_id = self.file.as_ref().unwrap().id;
+        match target {
+            Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
+            Target::Register(r) => self.write_register(r, file_id),
+        }
     }
 
     fn read_target(&mut self, t: &Target) -> Result<i32, Box<dyn Error>> {
