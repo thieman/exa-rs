@@ -87,6 +87,22 @@ fn file_command() {
 }
 
 #[test]
+fn test_eof() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("make\n test eof\n copy 1 f\n test eof\n seek -9999\n test eof\n noop");
+
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.assert_exa_register(&e1, "t", 1);
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.assert_exa_register(&e1, "t", 1);
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.assert_exa_register(&e1, "t", 0);
+}
+
+#[test]
 fn make_error() {
     let mut bench = TestBench::basic_vm();
     let e1 = bench.exa("make\n make\n noop\n");
@@ -119,6 +135,15 @@ fn drop_error() {
 fn grab_error() {
     let mut bench = TestBench::basic_vm();
     let e1 = bench.exa("grab 10\n noop\n");
+
+    bench.run_cycle();
+    bench.assert_fatal_error(&e1);
+}
+
+#[test]
+fn test_eof_error() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("test eof\n noop\n");
 
     bench.run_cycle();
     bench.assert_fatal_error(&e1);

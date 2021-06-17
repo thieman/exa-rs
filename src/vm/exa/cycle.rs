@@ -93,6 +93,7 @@ impl<'a> Exa<'a> {
             Instruction::Seek(ref target) => self.seek_file(target),
             Instruction::VoidF => self.void_file(),
             Instruction::File(ref target) => self.file_command(target),
+            Instruction::TestEof => self.test_eof(),
             Instruction::Rand(ref lo, ref hi, ref dest) => self.rand(lo, hi, dest),
             Instruction::Noop => Ok(()),
             Instruction::Mark(_) => panic!("marks should have been preprocessed out"),
@@ -102,7 +103,10 @@ impl<'a> Exa<'a> {
             Instruction::Kill => Ok(()),
             // test mrd is handled in the VM's run_cycle, after everything else
             Instruction::TestMrd => Ok(()),
-            _ => Ok(()),
+            // data is handled when EXAs are spawned at the beginning of the program
+            Instruction::Data(_) => Ok(()),
+            // waits freeze until the draw routine unfreezes
+            Instruction::Wait => Err(ExaError::Freezing("waiting").into()),
         };
 
         self.error = match result {
@@ -421,6 +425,16 @@ impl<'a> Exa<'a> {
             Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
             Target::Register(r) => self.write_register(r, file_id),
         }
+    }
+
+    fn test_eof(&mut self) -> ExaResult {
+        if self.file.is_none() {
+            return Err(ExaError::Fatal("no file is held").into());
+        }
+        let at_end = self.file_pointer == self.file.as_ref().unwrap().contents.len() as isize;
+        let value = if at_end { 1 } else { 0 };
+
+        return self.write_register("t", value);
     }
 
     fn rand(&mut self, lo: &Target, hi: &Target, dest: &Target) -> ExaResult {
