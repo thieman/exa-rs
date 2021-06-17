@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 use std::rc::Rc;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicI32, AtomicU64, Ordering};
 
 use super::super::parse::parse_text;
 use super::bus::MessageBus;
@@ -44,6 +44,7 @@ impl Registers {
         }
     }
 
+    #[allow(dead_code)]
     pub fn new_redshift() -> Registers {
         Registers {
             x: Register::new_shared(Permissions::ReadWrite, 0),
@@ -87,12 +88,13 @@ pub struct Exa<'a> {
     labels: HashMap<String, usize>,
     pub mode: Mode,
     file_pointer: u16,
-    file: Option<Rc<File>>,
+    pub file: Option<File>,
     global_bus: Shared<MessageBus>,
     pub host: Shared<Host<'a>>,
     pub error: Option<Box<dyn Error>>,
     result: CycleResult,
     spawn_counter: Rc<AtomicU64>,
+    file_counter: Rc<AtomicI32>,
 }
 
 impl PartialEq for Exa<'_> {
@@ -131,6 +133,7 @@ impl<'a> Exa<'a> {
             error: None,
             result: CycleResult::new(),
             spawn_counter: Rc::new(AtomicU64::new(1)),
+            file_counter: vm.file_counter.clone(),
         }));
         vm.register_exa(e.clone());
         Ok(e)
@@ -161,6 +164,7 @@ impl<'a> Exa<'a> {
             error: None,
             result: CycleResult::new(),
             spawn_counter: self.spawn_counter.clone(),
+            file_counter: self.file_counter.clone(),
         }));
         vm.register_exa(e.clone());
         Ok(e)

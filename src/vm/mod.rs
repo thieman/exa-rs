@@ -6,12 +6,14 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 use std::rc::Rc;
+use std::sync::atomic::AtomicI32;
 
 use itertools::Itertools;
 
 use self::exa::Exa;
 use bus::MessageBus;
 use error::ExaError;
+use file::File;
 use register::Register;
 
 pub mod bus;
@@ -42,6 +44,8 @@ pub struct Host<'a> {
     pub registers: HashMap<String, Shared<Register>>,
 
     pub bus: MessageBus,
+
+    pub files: Vec<File>,
 }
 
 impl PartialEq for Host<'_> {
@@ -61,6 +65,7 @@ impl<'a> Host<'_> {
             links: HashMap::new(),
             registers: HashMap::new(),
             bus: MessageBus::new(),
+            files: vec![],
         }
     }
     pub fn new_shared(name: String, capacity: usize) -> Shared<Host<'a>> {
@@ -136,6 +141,8 @@ pub struct VM<'a> {
     pub exas: Vec<Shared<Exa<'a>>>,
 
     pub bus: Shared<MessageBus>,
+
+    pub file_counter: Rc<AtomicI32>,
 }
 
 impl<'a> VM<'a> {
@@ -145,6 +152,7 @@ impl<'a> VM<'a> {
             hosts: HashMap::new(),
             exas: Vec::new(),
             bus: Rc::new(RefCell::new(MessageBus::new())),
+            file_counter: Rc::new(AtomicI32::new(400)),
         }
     }
     pub fn add_host(&mut self, host: Shared<Host<'a>>) {

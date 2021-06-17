@@ -164,8 +164,8 @@ fn test_mrd_not_ready() {
 #[test]
 fn test_mrd_after_read() {
     let mut bench = TestBench::basic_vm();
-    let e1 = bench.exa("copy 1 m\n noop\n");
-    let e2 = bench.exa("copy 1 m\n noop\n");
+    let _e1 = bench.exa("copy 1 m\n noop\n");
+    let _e2 = bench.exa("copy 1 m\n noop\n");
     let e3 = bench.exa("noop\n copy m x\n noop\n");
     let e4 = bench.exa("test mrd\n test mrd\n test mrd\n noop\n");
 

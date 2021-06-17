@@ -87,6 +87,38 @@ impl<'a> TestBench<'a> {
         assert_eq!(v, value, "wanted {} got {}", value, v);
     }
 
+    pub fn assert_exa_no_file(&self, exa: &Shared<Exa<'a>>) {
+        assert!(exa.borrow().file.is_none());
+    }
+
+    pub fn assert_exa_file(&self, exa: &Shared<Exa<'a>>, file_id: i32) {
+        assert_eq!(
+            exa.borrow().file.as_ref().expect("no file held").id,
+            file_id
+        );
+    }
+
+    pub fn assert_host_file(&self, hostname: &str, file_id: i32) {
+        let vm = self.vm.borrow();
+        let host = vm.hosts.get(hostname).expect("unknown host");
+        for f in host.borrow().files.iter() {
+            if f.id == file_id {
+                return;
+            }
+        }
+        panic!("file not found");
+    }
+
+    pub fn assert_host_no_file(&self, hostname: &str, file_id: i32) {
+        let vm = self.vm.borrow();
+        let host = vm.hosts.get(hostname).expect("unknown host");
+        for f in host.borrow().files.iter() {
+            if f.id == file_id {
+                panic!("file found");
+            }
+        }
+    }
+
     pub fn assert_fatal_error(&self, exa: &Shared<Exa<'a>>) {
         let e = exa.borrow();
         let error = e.error.as_ref().unwrap();

@@ -27,6 +27,8 @@ impl<'a> VM<'a> {
             }
         }
 
+        // TODO: Clear out killed EXAs from message bus send queues
+
         // Run message buses
         self.bus.borrow_mut().run_cycle();
         for host in self.hosts.values_mut() {

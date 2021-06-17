@@ -1,6 +1,8 @@
 use std::error::Error;
+use std::sync::atomic::Ordering;
 
 use super::super::error::ExaError;
+use super::super::file::File;
 use super::super::instruction::{Comparator, Instruction, Target};
 use super::super::register::Register;
 use super::super::VM;
@@ -79,6 +81,10 @@ impl<'a> Exa<'a> {
                 Ok(())
             }
             Instruction::VoidM => self.read_register("m").map(|_| ()),
+            Instruction::Make => self.make_file(),
+            Instruction::Drop => self.drop_file(),
+            Instruction::Wipe => self.wipe_file(),
+            Instruction::Grab(ref file_target) => self.grab_file(file_target),
             Instruction::Halt => Err(ExaError::Fatal("explicit halt").into()),
             Instruction::Noop => Ok(()),
             Instruction::Mark(_) => panic!("marks should have been preprocessed out"),
@@ -310,6 +316,59 @@ impl<'a> Exa<'a> {
         };
         self.write_register("t", if ready { 1 } else { 0 })
             .expect("error writing to T from test mrd");
+    }
+
+    fn make_file(&mut self) -> ExaResult {
+        if self.file.is_some() {
+            return Err(ExaError::Fatal("cannot grab a second file").into());
+        }
+        let file_id = self.file_counter.fetch_add(1, Ordering::Relaxed);
+        self.file = Some(File::new(file_id, vec![]));
+        Ok(())
+    }
+
+    fn drop_file(&mut self) -> ExaResult {
+        if self.file.is_none() {
+            return Err(ExaError::Fatal("no file is held").into());
+        }
+        let mut host_mut = self.host.borrow_mut();
+        host_mut.reserve_slot()?;
+
+        let f = self.file.take();
+        host_mut.files.push(f.unwrap());
+
+        Ok(())
+    }
+
+    fn wipe_file(&mut self) -> ExaResult {
+        if self.file.is_none() {
+            return Err(ExaError::Fatal("no file is held").into());
+        }
+
+        self.file = None;
+
+        Ok(())
+    }
+
+    fn grab_file(&mut self, file_target: &Target) -> ExaResult {
+        let file_id = self.read_target(file_target)?;
+        if self.file.is_some() {
+            return Err(ExaError::Fatal("cannot grab a second file").into());
+        }
+
+        let files = &mut self.host.borrow_mut().files;
+        let mut i = 0;
+        while i < files.len() {
+            let f = &files[i];
+            if f.id == file_id {
+                self.file = Some(files.remove(i));
+                return Ok(());
+            } else {
+                i += 1;
+            }
+        }
+
+        Err(ExaError::Fatal("file id not found").into())
     }
 
     fn read_target(&mut self, t: &Target) -> Result<i32, Box<dyn Error>> {
