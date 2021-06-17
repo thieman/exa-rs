@@ -117,6 +117,7 @@ impl<'a> Exa<'a> {
         host.borrow_mut().reserve_slot()?;
         let mut insts = parse_text(script).unwrap();
         let labels = Exa::extract_labels(&mut insts);
+        let data_file = Exa::extract_data(&mut insts, vm.file_counter.clone());
         let e = Rc::new(RefCell::new(Exa {
             base_name: name.clone(),
             spawn_id: 0,
@@ -127,7 +128,7 @@ impl<'a> Exa<'a> {
             labels: labels,
             mode: Mode::Global,
             file_pointer: 0,
-            file: None,
+            file: data_file,
             global_bus: vm.bus.clone(),
             host: host,
             error: None,
@@ -194,6 +195,32 @@ impl<'a> Exa<'a> {
         }
 
         m
+    }
+
+    fn extract_data(
+        instructions: &mut Vec<Instruction>,
+        file_counter: Rc<AtomicI32>,
+    ) -> Option<File> {
+        let mut contents: Vec<i32> = vec![];
+
+        let mut idx = 0;
+        while idx < instructions.len() {
+            let inst = &instructions[idx];
+            match inst {
+                Instruction::Data(data) => {
+                    contents.extend(data);
+                    instructions.remove(idx);
+                }
+                _ => idx += 1,
+            }
+        }
+
+        if contents.len() == 0 {
+            return None;
+        }
+
+        let file_id = file_counter.fetch_add(1, Ordering::Relaxed);
+        Some(File::new(file_id, contents))
     }
 
     pub fn is_fatal(&self) -> bool {

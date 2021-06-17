@@ -31,8 +31,7 @@ pub enum Instruction {
     Noop,
     Rand(Target, Target, Target),
     Wait,
-    // TODO
-    // Data(N...),
+    Data(Vec<i32>),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

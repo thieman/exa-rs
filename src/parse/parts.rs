@@ -5,7 +5,8 @@ use nom::{
     bytes::complete::{tag_no_case, take_while},
     character::complete::{line_ending, one_of, space0, space1},
     combinator::{map, map_res},
-    sequence::tuple,
+    multi::many1,
+    sequence::{terminated, tuple},
     IResult,
 };
 
@@ -288,6 +289,15 @@ fn parse_wait(i: &str) -> IResult<&str, Instruction> {
     Ok((t.0, Instruction::Wait))
 }
 
+fn parse_data(i: &str) -> IResult<&str, Instruction> {
+    let t = tuple((
+        tag_no_case("data"),
+        space1,
+        many1(terminated(parse_literal, space0)),
+    ))(i)?;
+    Ok((t.0, Instruction::Data(t.1 .2)))
+}
+
 pub fn parse_line(i: &str) -> IResult<&str, Instruction> {
     let t = tuple((
         alt((
@@ -314,6 +324,7 @@ pub fn parse_line(i: &str) -> IResult<&str, Instruction> {
             )),
             alt((parse_noop, parse_rand)),
             parse_wait,
+            parse_data,
         )),
         space0,
         line_ending,
@@ -413,6 +424,18 @@ mod tests {
             parse_mark("mark up1\n"),
             Ok(("\n", Instruction::Mark(String::from("up1"))))
         )
+    }
+
+    #[test]
+    fn test_data() {
+        assert_eq!(
+            parse_data("data 1\n"),
+            Ok(("\n", Instruction::Data(vec![1]))),
+        );
+        assert_eq!(
+            parse_data("data 1 2 3\n"),
+            Ok(("\n", Instruction::Data(vec![1, 2, 3]))),
+        );
     }
 
     #[test]
