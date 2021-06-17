@@ -1,6 +1,10 @@
 use std::error::Error;
 use std::sync::atomic::Ordering;
 
+use rand::distributions::uniform::Uniform;
+use rand::distributions::Distribution;
+use rand::thread_rng;
+
 use super::super::error::ExaError;
 use super::super::file::File;
 use super::super::instruction::{Comparator, Instruction, Target};
@@ -89,6 +93,7 @@ impl<'a> Exa<'a> {
             Instruction::Seek(ref target) => self.seek_file(target),
             Instruction::VoidF => self.void_file(),
             Instruction::File(ref target) => self.file_command(target),
+            Instruction::Rand(ref lo, ref hi, ref dest) => self.rand(lo, hi, dest),
             Instruction::Noop => Ok(()),
             Instruction::Mark(_) => panic!("marks should have been preprocessed out"),
             // host is unsupported because we don't support keywords. convert to noop
@@ -415,6 +420,20 @@ impl<'a> Exa<'a> {
         match target {
             Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
             Target::Register(r) => self.write_register(r, file_id),
+        }
+    }
+
+    fn rand(&mut self, lo: &Target, hi: &Target, dest: &Target) -> ExaResult {
+        let (lo_value, hi_value) = (self.read_target(lo)?, self.read_target(hi)?);
+        if lo_value > hi_value {
+            return Err(ExaError::Fatal("invalid rand range").into());
+        }
+
+        let sampler = Uniform::new_inclusive(lo_value, hi_value);
+        let value = sampler.sample(&mut thread_rng());
+        match dest {
+            Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
+            Target::Register(r) => self.write_register(r, value),
         }
     }
 
