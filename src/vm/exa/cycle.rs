@@ -87,6 +87,7 @@ impl<'a> Exa<'a> {
             Instruction::Grab(ref file_target) => self.grab_file(file_target),
             Instruction::Halt => Err(ExaError::Fatal("explicit halt").into()),
             Instruction::Seek(ref target) => self.seek_file(target),
+            Instruction::VoidF => self.void_file(),
             Instruction::Noop => Ok(()),
             Instruction::Mark(_) => panic!("marks should have been preprocessed out"),
             // host is unsupported because we don't support keywords. convert to noop
@@ -385,6 +386,21 @@ impl<'a> Exa<'a> {
         } else if self.file_pointer > self.file.as_ref().unwrap().contents.len() as isize {
             self.file_pointer = self.file.as_ref().unwrap().contents.len() as isize;
         }
+
+        Ok(())
+    }
+
+    fn void_file(&mut self) -> ExaResult {
+        if self.file.is_none() {
+            return Err(ExaError::Fatal("no file is held").into());
+        }
+
+        let f = self.file.as_mut().unwrap();
+        if self.file_pointer >= f.contents.len() as isize {
+            return Err(ExaError::Fatal("cannot void from file at append position").into());
+        }
+
+        f.contents.remove(self.file_pointer as usize);
 
         Ok(())
     }

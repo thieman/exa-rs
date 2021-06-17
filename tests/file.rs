@@ -55,6 +55,24 @@ fn file_seek_bounds() {
 }
 
 #[test]
+fn file_void() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("void f\n noop\n");
+    let e2 = bench.exa("make\n void f\n noop\n");
+    let e3 = bench.exa("make\n copy 1 f\n copy 2 f\n seek -9999\n void f\n noop\n");
+
+    bench.run_cycle();
+    bench.assert_fatal_error(&e1);
+    bench.run_cycle();
+    bench.assert_fatal_error(&e2);
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.assert_exa_file_contents(&e3, vec![2]);
+    bench.assert_no_error(&e3);
+}
+
+#[test]
 fn make_error() {
     let mut bench = TestBench::basic_vm();
     let e1 = bench.exa("make\n make\n noop\n");
