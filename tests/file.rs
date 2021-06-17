@@ -22,6 +22,39 @@ fn file_handling() {
 }
 
 #[test]
+fn file_io() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("make\n copy 1 f\n copy 2 f\n seek -2\n copy f x\n copy f x\n noop\n");
+
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.assert_exa_file_contents(&e1, vec![1, 2]);
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.assert_exa_register(&e1, "x", 1);
+    bench.run_cycle();
+    bench.assert_exa_register(&e1, "x", 2);
+}
+
+#[test]
+fn file_seek_bounds() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("make\n copy 1 f\n copy 2 f\n seek -9999\n copy f x\n seek -9999\n seek 9999\n copy 3 f\n noop\n");
+
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.assert_exa_register(&e1, "x", 1);
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.assert_exa_file_contents(&e1, vec![1, 2, 3]);
+}
+
+#[test]
 fn make_error() {
     let mut bench = TestBench::basic_vm();
     let e1 = bench.exa("make\n make\n noop\n");

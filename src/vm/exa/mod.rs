@@ -87,7 +87,7 @@ pub struct Exa<'a> {
     // Map of label name to index in self.instructions
     labels: HashMap<String, usize>,
     pub mode: Mode,
-    file_pointer: u16,
+    file_pointer: isize,
     pub file: Option<File>,
     global_bus: Shared<MessageBus>,
     pub host: Shared<Host<'a>>,

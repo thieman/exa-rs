@@ -98,6 +98,12 @@ impl<'a> TestBench<'a> {
         );
     }
 
+    pub fn assert_exa_file_contents(&self, exa: &Shared<Exa<'a>>, contents: Vec<i32>) {
+        let e = exa.borrow();
+        let f = e.file.as_ref().expect("no file held");
+        assert_eq!(f.contents, contents);
+    }
+
     pub fn assert_host_file(&self, hostname: &str, file_id: i32) {
         let vm = self.vm.borrow();
         let host = vm.hosts.get(hostname).expect("unknown host");

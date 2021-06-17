@@ -86,6 +86,7 @@ impl<'a> Exa<'a> {
             Instruction::Wipe => self.wipe_file(),
             Instruction::Grab(ref file_target) => self.grab_file(file_target),
             Instruction::Halt => Err(ExaError::Fatal("explicit halt").into()),
+            Instruction::Seek(ref target) => self.seek_file(target),
             Instruction::Noop => Ok(()),
             Instruction::Mark(_) => panic!("marks should have been preprocessed out"),
             // host is unsupported because we don't support keywords. convert to noop
@@ -371,6 +372,23 @@ impl<'a> Exa<'a> {
         Err(ExaError::Fatal("file id not found").into())
     }
 
+    fn seek_file(&mut self, target: &Target) -> ExaResult {
+        if self.file.is_none() {
+            return Err(ExaError::Fatal("no file is held").into());
+        }
+
+        let seek_amount = self.read_target(target)?;
+        self.file_pointer += seek_amount as isize;
+
+        if self.file_pointer < 0 {
+            self.file_pointer = 0;
+        } else if self.file_pointer > self.file.as_ref().unwrap().contents.len() as isize {
+            self.file_pointer = self.file.as_ref().unwrap().contents.len() as isize;
+        }
+
+        Ok(())
+    }
+
     fn read_target(&mut self, t: &Target) -> Result<i32, Box<dyn Error>> {
         match t {
             Target::Literal(l) => Ok(*l),
@@ -381,6 +399,8 @@ impl<'a> Exa<'a> {
     pub fn read_register(&mut self, r_specifier: &str) -> Result<i32, Box<dyn Error>> {
         if r_specifier == "m" {
             return self.read_from_bus();
+        } else if r_specifier == "f" {
+            return self.read_from_file();
         }
 
         let r = self.resolve_register(r_specifier)?;
@@ -400,6 +420,8 @@ impl<'a> Exa<'a> {
     fn write_register(&mut self, r_specifier: &str, value: i32) -> ExaResult {
         if r_specifier == "m" {
             return self.write_to_bus(value);
+        } else if r_specifier == "f" {
+            return self.write_to_file(value);
         }
         let r = self.resolve_register(r_specifier)?;
         let mut b = r.borrow_mut();
@@ -415,6 +437,38 @@ impl<'a> Exa<'a> {
         }
 
         b.value = value;
+        Ok(())
+    }
+
+    fn read_from_file(&mut self) -> Result<i32, Box<dyn Error>> {
+        if self.file.is_none() {
+            return Err(ExaError::Fatal("no file is held").into());
+        }
+
+        let f = self.file.as_ref().unwrap();
+        if self.file_pointer >= f.contents.len() as isize {
+            return Err(ExaError::Fatal("cannot read from file at append position").into());
+        }
+
+        let value = f.contents[self.file_pointer as usize];
+        self.file_pointer += 1;
+        Ok(value)
+    }
+
+    fn write_to_file(&mut self, value: i32) -> ExaResult {
+        if self.file.is_none() {
+            return Err(ExaError::Fatal("no file is held").into());
+        }
+
+        let f = self.file.as_mut().unwrap();
+        if self.file_pointer == f.contents.len() as isize {
+            f.contents.push(value);
+        } else {
+            f.contents[self.file_pointer as usize] = value;
+        }
+
+        self.file_pointer += 1;
+
         Ok(())
     }
 
