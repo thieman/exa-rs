@@ -44,7 +44,6 @@ impl Registers {
         }
     }
 
-    #[allow(dead_code)]
     pub fn new_redshift() -> Registers {
         Registers {
             x: Register::new_shared(Permissions::ReadWrite, 0),
@@ -81,20 +80,30 @@ pub struct Exa<'a> {
     base_name: String,
     spawn_id: u64,
     pub name: String,
+
     registers: Registers,
+    result: CycleResult,
+    spawn_counter: Rc<AtomicU64>,
+    file_counter: Rc<AtomicI32>,
+
     pc: usize,
     instructions: Vec<Instruction>,
     // Map of label name to index in self.instructions
     labels: HashMap<String, usize>,
+
     pub mode: Mode,
-    file_pointer: isize,
-    pub file: Option<File>,
     global_bus: Shared<MessageBus>,
+
     pub host: Shared<Host<'a>>,
     pub error: Option<Box<dyn Error>>,
-    result: CycleResult,
-    spawn_counter: Rc<AtomicU64>,
-    file_counter: Rc<AtomicI32>,
+
+    file_pointer: isize,
+    pub file: Option<File>,
+
+    pub sprite: [bool; 100],
+    pub pos_x: i32,
+    pub pos_y: i32,
+    pub pos_z: i32,
 }
 
 impl PartialEq for Exa<'_> {
@@ -111,6 +120,7 @@ impl<'a> Exa<'a> {
         vm: &mut VM<'a>,
         host: Shared<Host<'a>>,
         name: String,
+        redshift: bool,
         script: &str,
     ) -> Result<Shared<Exa<'a>>, Box<dyn Error>> {
         // TODO: VM check on name uniqueness
@@ -122,7 +132,11 @@ impl<'a> Exa<'a> {
             base_name: name.clone(),
             spawn_id: 0,
             name,
-            registers: Registers::new(),
+            registers: if redshift {
+                Registers::new_redshift()
+            } else {
+                Registers::new()
+            },
             pc: 0,
             instructions: insts,
             labels: labels,
@@ -135,6 +149,10 @@ impl<'a> Exa<'a> {
             result: CycleResult::new(),
             spawn_counter: Rc::new(AtomicU64::new(1)),
             file_counter: vm.file_counter.clone(),
+            sprite: [false; 100],
+            pos_x: 0,
+            pos_y: 0,
+            pos_z: 0,
         }));
         vm.register_exa(e.clone());
         Ok(e)
@@ -166,6 +184,10 @@ impl<'a> Exa<'a> {
             result: CycleResult::new(),
             spawn_counter: self.spawn_counter.clone(),
             file_counter: self.file_counter.clone(),
+            sprite: [false; 100],
+            pos_x: 0,
+            pos_y: 0,
+            pos_z: 0,
         }));
         vm.register_exa(e.clone());
         Ok(e)

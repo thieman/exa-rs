@@ -12,6 +12,7 @@ use exa::vm::{Host, Permissions, Shared, VM};
 pub struct TestBench<'a> {
     vm: Shared<VM<'a>>,
     spawned: usize,
+    redshift: bool,
 }
 
 impl fmt::Display for TestBench<'_> {
@@ -44,16 +45,35 @@ impl<'a> TestBench<'a> {
         TestBench {
             vm: Rc::new(RefCell::new(vm)),
             spawned: 0,
+            redshift: false,
+        }
+    }
+
+    pub fn redshift_vm() -> TestBench<'a> {
+        let vm = VM::new_redshift();
+
+        TestBench {
+            vm: Rc::new(RefCell::new(vm)),
+            spawned: 0,
+            redshift: true,
         }
     }
 
     /// Spawn an Exa in the first host.
     pub fn exa(&mut self, script: &str) -> Shared<Exa<'a>> {
-        let host = self.vm.borrow().hosts.get("start").unwrap().clone();
+        let name = if self.redshift { "core" } else { "start" };
+        let host = self.vm.borrow().hosts.get(name).unwrap().clone();
         let mut name = String::from("x");
         name.push_str(&self.spawned.to_string());
         self.spawned += 1;
-        Exa::spawn(&mut self.vm.clone().borrow_mut(), host, name, script).unwrap()
+        Exa::spawn(
+            &mut self.vm.clone().borrow_mut(),
+            host,
+            name,
+            self.redshift,
+            script,
+        )
+        .unwrap()
     }
 
     /// Spawn an Exa, with all available options.
@@ -62,7 +82,14 @@ impl<'a> TestBench<'a> {
         let mut name = String::from("x");
         name.push_str(&self.spawned.to_string());
         self.spawned += 1;
-        let e = Exa::spawn(&mut self.vm.clone().borrow_mut(), host, name, script).unwrap();
+        let e = Exa::spawn(
+            &mut self.vm.clone().borrow_mut(),
+            host,
+            name,
+            self.redshift,
+            script,
+        )
+        .unwrap();
         e.borrow_mut().mode = mode;
         e
     }

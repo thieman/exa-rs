@@ -155,6 +155,70 @@ impl<'a> VM<'a> {
             file_counter: Rc::new(AtomicI32::new(400)),
         }
     }
+
+    // Instantiate a VM matching the Redshift spec
+    pub fn new_redshift() -> VM<'a> {
+        let mut vm = VM::new();
+
+        let core = Host::new_shared("core".to_string(), 18);
+        let input = Host::new_shared("input".to_string(), 24);
+        let sound = Host::new_shared("sound".to_string(), 24);
+        let aux1 = Host::new_shared("aux1".to_string(), 3);
+        let aux2 = Host::new_shared("aux2".to_string(), 3);
+
+        let padx = Register::new(Permissions::ReadWrite, 0);
+        let pady = Register::new(Permissions::ReadWrite, 0);
+        let padb = Register::new(Permissions::ReadWrite, 0);
+        let en3d = Register::new(Permissions::ReadWrite, 0);
+        let sqr0 = Register::new(Permissions::ReadWrite, 0);
+        let sqr1 = Register::new(Permissions::ReadWrite, 0);
+        let tri0 = Register::new(Permissions::ReadWrite, 0);
+        let nse0 = Register::new(Permissions::ReadWrite, 0);
+
+        input
+            .borrow_mut()
+            .add_register(String::from("#PADX"), Rc::new(RefCell::new(padx)));
+        input
+            .borrow_mut()
+            .add_register(String::from("#PADY"), Rc::new(RefCell::new(pady)));
+        input
+            .borrow_mut()
+            .add_register(String::from("#PADB"), Rc::new(RefCell::new(padb)));
+        input
+            .borrow_mut()
+            .add_register(String::from("#EN3D"), Rc::new(RefCell::new(en3d)));
+
+        sound
+            .borrow_mut()
+            .add_register(String::from("#SQR0"), Rc::new(RefCell::new(sqr0)));
+        sound
+            .borrow_mut()
+            .add_register(String::from("#SQR1"), Rc::new(RefCell::new(sqr1)));
+        sound
+            .borrow_mut()
+            .add_register(String::from("#TRI0"), Rc::new(RefCell::new(tri0)));
+        sound
+            .borrow_mut()
+            .add_register(String::from("#NSE0"), Rc::new(RefCell::new(nse0)));
+
+        vm.add_host(core.clone());
+        vm.add_host(input.clone());
+        vm.add_host(sound.clone());
+        vm.add_host(aux1.clone());
+        vm.add_host(aux2.clone());
+
+        vm.add_link(800, core.clone(), input.clone());
+        vm.add_link(-1, input.clone(), core.clone());
+        vm.add_link(801, core.clone(), sound.clone());
+        vm.add_link(-1, sound.clone(), core.clone());
+        vm.add_link(802, core.clone(), aux1.clone());
+        vm.add_link(-1, aux1.clone(), core.clone());
+        vm.add_link(803, core.clone(), aux2.clone());
+        vm.add_link(-1, aux2.clone(), core.clone());
+
+        vm
+    }
+
     pub fn add_host(&mut self, host: Shared<Host<'a>>) {
         self.hosts
             .insert(String::from(&host.borrow().name), host.clone());

@@ -475,8 +475,15 @@ impl<'a> Exa<'a> {
             Permissions::WriteOnly => {
                 return Err(ExaError::Fatal("attempt to read from write-only register").into())
             }
-            _ => Ok(b.value),
+            _ => (),
         }
+
+        Ok(match r_specifier {
+            "gx" => self.pos_x,
+            "gy" => self.pos_y,
+            "gz" => self.pos_z,
+            _ => b.value,
+        })
     }
 
     fn write_register(&mut self, r_specifier: &str, value: i32) -> ExaResult {
@@ -485,6 +492,7 @@ impl<'a> Exa<'a> {
         } else if r_specifier == "f" {
             return self.write_to_file(value);
         }
+
         let r = self.resolve_register(r_specifier)?;
         let mut b = r.borrow_mut();
 
@@ -495,6 +503,13 @@ impl<'a> Exa<'a> {
             Permissions::ReadOnly => {
                 return Err(ExaError::Fatal("attempt to write to read-only register").into())
             }
+            _ => (),
+        }
+
+        match r_specifier {
+            "gx" => self.pos_x = value,
+            "gy" => self.pos_y = value,
+            "gz" => self.pos_z = value,
             _ => (),
         }
 
