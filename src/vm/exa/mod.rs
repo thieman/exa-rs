@@ -1,4 +1,5 @@
 mod cycle;
+pub mod sprite;
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -17,6 +18,7 @@ use super::Permissions;
 use super::{Host, Shared, VM};
 
 use cycle::CycleResult;
+use sprite::Sprite;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct Registers {
@@ -59,12 +61,8 @@ impl Registers {
 
     pub fn clone_for_repl(&self) -> Registers {
         let r = self.clone();
-        r.gx.borrow_mut().value = 0;
-        r.gy.borrow_mut().value = 0;
-        r.gz.borrow_mut().value = 0;
         r.gp.borrow_mut().value = 0;
-        r.ci.borrow_mut().value = 0;
-        r.co.borrow_mut().value = 0;
+        r.ci.borrow_mut().value = -9999;
         r
     }
 }
@@ -100,10 +98,7 @@ pub struct Exa<'a> {
     file_pointer: isize,
     pub file: Option<File>,
 
-    pub sprite: [bool; 100],
-    pub pos_x: i32,
-    pub pos_y: i32,
-    pub pos_z: i32,
+    pub sprite: Sprite,
 }
 
 impl PartialEq for Exa<'_> {
@@ -149,10 +144,7 @@ impl<'a> Exa<'a> {
             result: CycleResult::new(),
             spawn_counter: Rc::new(AtomicU64::new(1)),
             file_counter: vm.file_counter.clone(),
-            sprite: [false; 100],
-            pos_x: 0,
-            pos_y: 0,
-            pos_z: 0,
+            sprite: Sprite::empty(),
         }));
         vm.register_exa(e.clone());
         Ok(e)
@@ -184,10 +176,7 @@ impl<'a> Exa<'a> {
             result: CycleResult::new(),
             spawn_counter: self.spawn_counter.clone(),
             file_counter: self.file_counter.clone(),
-            sprite: [false; 100],
-            pos_x: 0,
-            pos_y: 0,
-            pos_z: 0,
+            sprite: self.sprite.clone(),
         }));
         vm.register_exa(e.clone());
         Ok(e)

@@ -478,12 +478,7 @@ impl<'a> Exa<'a> {
             _ => (),
         }
 
-        Ok(match r_specifier {
-            "gx" => self.pos_x,
-            "gy" => self.pos_y,
-            "gz" => self.pos_z,
-            _ => b.value,
-        })
+        Ok(b.value)
     }
 
     fn write_register(&mut self, r_specifier: &str, value: i32) -> ExaResult {
@@ -491,6 +486,8 @@ impl<'a> Exa<'a> {
             return self.write_to_bus(value);
         } else if r_specifier == "f" {
             return self.write_to_file(value);
+        } else if r_specifier == "gp" {
+            return self.write_sprite(value);
         }
 
         let r = self.resolve_register(r_specifier)?;
@@ -506,15 +503,33 @@ impl<'a> Exa<'a> {
             _ => (),
         }
 
-        match r_specifier {
-            "gx" => self.pos_x = clamp(value, -10, 120),
-            "gy" => self.pos_y = clamp(value, -10, 100),
-            "gz" => self.pos_z = clamp(value, -9, 9),
-            _ => (),
+        b.value = match r_specifier {
+            "gx" => clamp(value, -10, 120),
+            "gy" => clamp(value, -10, 100),
+            "gz" => clamp(value, -9, 9),
+            _ => value,
+        };
+        Ok(())
+    }
+
+    fn write_sprite(&mut self, value: i32) -> ExaResult {
+        if value < 0 {
+            return Ok(());
         }
 
-        b.value = value;
+        let digits = int_to_digits(value);
+        match digits[1] {
+            0 => self.sprite.disable(digits[2], digits[3]),
+            1 => self.sprite.enable(digits[2], digits[3]),
+            2 => self.sprite.toggle(digits[2], digits[3]),
+            3 => self.load_builtin_sprite((digits[2] * 10) + digits[3]),
+            _ => (),
+        }
         Ok(())
+    }
+
+    fn load_builtin_sprite(&mut self, _code: u32) {
+        // todo
     }
 
     fn read_from_file(&mut self) -> Result<i32, Box<dyn Error>> {

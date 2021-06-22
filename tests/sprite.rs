@@ -49,3 +49,37 @@ fn pos_z() {
     bench.assert_exa_register(&e2, "t", 9);
     bench.assert_exa_register(&e3, "t", -9);
 }
+
+#[test]
+fn repl_copies_sprite() {
+    let mut bench = TestBench::redshift_vm();
+    bench.exa("copy 1 gx\n copy 2 gy\n copy 3 gz\n copy 200 gp\n mark r\n repl r\n");
+
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    let e2 = bench.get_exa("x0:1");
+    bench.assert_exa_register(&e2, "gx", 1);
+    bench.assert_exa_register(&e2, "gy", 2);
+    bench.assert_exa_register(&e2, "gz", 3);
+    bench.assert_exa_sprite(&e2, vec![0, 1, 99]);
+}
+
+#[test]
+fn gp_manipulation() {
+    let mut bench = TestBench::redshift_vm();
+    let e1 = bench.exa("copy 100 gp\n copy 110 gp\n copy 120 gp\n copy 000 gp\n copy 210 gp\n");
+
+    bench.run_cycle();
+    bench.assert_exa_sprite(&e1, vec![0, 1, 99]);
+    bench.run_cycle();
+    bench.assert_exa_sprite(&e1, vec![0, 2, 98]);
+    bench.run_cycle();
+    bench.assert_exa_sprite(&e1, vec![0, 3, 97]);
+    bench.run_cycle();
+    bench.assert_exa_sprite(&e1, vec![1, 2, 97]);
+    bench.run_cycle();
+    bench.assert_exa_sprite(&e1, vec![2, 1, 97]);
+}

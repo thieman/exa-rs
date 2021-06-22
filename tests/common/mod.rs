@@ -5,6 +5,7 @@ use std::fmt;
 use std::rc::Rc;
 
 use exa::vm::error::ExaError;
+use exa::vm::exa::sprite::Sprite;
 use exa::vm::exa::{Exa, Mode};
 use exa::vm::register::Register;
 use exa::vm::{Host, Permissions, Shared, VM};
@@ -129,6 +130,11 @@ impl<'a> TestBench<'a> {
         let e = exa.borrow();
         let f = e.file.as_ref().expect("no file held");
         assert_eq!(f.contents, contents);
+    }
+
+    pub fn assert_exa_sprite(&self, exa: &Shared<Exa<'a>>, shorthand: Vec<u32>) {
+        let test_sprite = Sprite::from_shorthand(shorthand);
+        assert_eq!(exa.borrow().sprite, test_sprite);
     }
 
     pub fn assert_host_file(&self, hostname: &str, file_id: i32) {
