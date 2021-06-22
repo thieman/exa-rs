@@ -166,10 +166,10 @@ impl<'a> VM<'a> {
         let aux1 = Host::new_shared("aux1".to_string(), 3);
         let aux2 = Host::new_shared("aux2".to_string(), 3);
 
-        let padx = Register::new(Permissions::ReadWrite, 0);
-        let pady = Register::new(Permissions::ReadWrite, 0);
-        let padb = Register::new(Permissions::ReadWrite, 0);
-        let en3d = Register::new(Permissions::ReadWrite, 0);
+        let padx = Register::new(Permissions::ReadOnly, 0);
+        let pady = Register::new(Permissions::ReadOnly, 0);
+        let padb = Register::new(Permissions::ReadOnly, 0);
+        let en3d = Register::new(Permissions::ReadOnly, 0);
         let sqr0 = Register::new(Permissions::ReadWrite, 0);
         let sqr1 = Register::new(Permissions::ReadWrite, 0);
         let tri0 = Register::new(Permissions::ReadWrite, 0);

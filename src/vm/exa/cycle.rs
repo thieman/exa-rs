@@ -13,11 +13,11 @@ use super::super::VM;
 use super::super::{Permissions, Shared};
 use super::{Exa, Mode};
 
-fn clamp(value: i32) -> i32 {
-    if value > 9999 {
-        9999
-    } else if value < -9999 {
-        -9999
+fn clamp(value: i32, min: i32, max: i32) -> i32 {
+    if value > max {
+        max
+    } else if value < min {
+        min
     } else {
         value
     }
@@ -188,7 +188,7 @@ impl<'a> Exa<'a> {
 
         match dest {
             Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
-            Target::Register(r) => self.write_register(r, clamp(value)),
+            Target::Register(r) => self.write_register(r, clamp(value, -9999, 9999)),
         }
     }
 
@@ -197,7 +197,7 @@ impl<'a> Exa<'a> {
 
         match dest {
             Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
-            Target::Register(r) => self.write_register(r, clamp(value)),
+            Target::Register(r) => self.write_register(r, clamp(value, -9999, 9999)),
         }
     }
 
@@ -206,7 +206,7 @@ impl<'a> Exa<'a> {
 
         match dest {
             Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
-            Target::Register(r) => self.write_register(r, clamp(value)),
+            Target::Register(r) => self.write_register(r, clamp(value, -9999, 9999)),
         }
     }
 
@@ -220,7 +220,7 @@ impl<'a> Exa<'a> {
 
         match dest {
             Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
-            Target::Register(r) => self.write_register(r, clamp(value)),
+            Target::Register(r) => self.write_register(r, clamp(value, -9999, 9999)),
         }
     }
 
@@ -234,7 +234,7 @@ impl<'a> Exa<'a> {
 
         match dest {
             Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
-            Target::Register(r) => self.write_register(r, clamp(value)),
+            Target::Register(r) => self.write_register(r, clamp(value, -9999, 9999)),
         }
     }
 
@@ -507,9 +507,9 @@ impl<'a> Exa<'a> {
         }
 
         match r_specifier {
-            "gx" => self.pos_x = value,
-            "gy" => self.pos_y = value,
-            "gz" => self.pos_z = value,
+            "gx" => self.pos_x = clamp(value, -10, 120),
+            "gy" => self.pos_y = clamp(value, -10, 100),
+            "gz" => self.pos_z = clamp(value, -9, 9),
             _ => (),
         }
 
