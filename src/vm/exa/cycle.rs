@@ -11,6 +11,7 @@ use super::super::instruction::{Comparator, Instruction, Target};
 use super::super::register::Register;
 use super::super::VM;
 use super::super::{Permissions, Shared};
+use super::sprite::Sprite;
 use super::{Exa, Mode};
 
 fn clamp(value: i32, min: i32, max: i32) -> i32 {
@@ -522,14 +523,10 @@ impl<'a> Exa<'a> {
             0 => self.sprite.disable(digits[2], digits[3]),
             1 => self.sprite.enable(digits[2], digits[3]),
             2 => self.sprite.toggle(digits[2], digits[3]),
-            3 => self.load_builtin_sprite((digits[2] * 10) + digits[3]),
+            3 => self.sprite = Sprite::from_builtin((digits[2] * 10) + digits[3]),
             _ => (),
         }
         Ok(())
-    }
-
-    fn load_builtin_sprite(&mut self, _code: u32) {
-        // todo
     }
 
     fn read_from_file(&mut self) -> Result<i32, Box<dyn Error>> {

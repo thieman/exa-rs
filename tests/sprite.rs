@@ -83,3 +83,13 @@ fn gp_manipulation() {
     bench.run_cycle();
     bench.assert_exa_sprite(&e1, vec![2, 1, 97]);
 }
+
+#[test]
+fn sprite_builtins() {
+    // just load each sprite to make sure it doesn't panic
+    for code in 0..39 {
+        let mut bench = TestBench::redshift_vm();
+        bench.exa(format!("copy 3{:02} gp\n", code).as_str());
+        bench.run_cycle();
+    }
+}
