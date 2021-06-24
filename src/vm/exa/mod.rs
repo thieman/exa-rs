@@ -284,6 +284,19 @@ impl<'a> Exa<'a> {
     pub fn ancestor_of(&self, other: Shared<Exa<'a>>) -> bool {
         self.base_name == other.borrow().base_name && self.spawn_id < other.borrow().spawn_id
     }
+
+    // Returns (x,y) vector of currently enabled pixels
+    pub fn pixels(&self) -> Vec<(usize, usize)> {
+        let x = self.registers.gx.borrow().value as usize;
+        let y = self.registers.gy.borrow().value as usize;
+        let mut v = vec![];
+        for (idx, pixel) in self.sprite.pixels.iter().enumerate() {
+            if *pixel {
+                v.push(((idx % 10) + x, (idx / 10) + y));
+            }
+        }
+        v
+    }
 }
 
 impl fmt::Display for Exa<'_> {

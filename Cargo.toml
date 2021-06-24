@@ -4,11 +4,8 @@ version = "0.1.0"
 authors = ["Travis Thieman <travis.thieman@gmail.com>"]
 edition = "2018"
 
-[[bin]]
-name = "exa"
-path = "src/main.rs"
-
 [lib]
+crate-type = ["lib", "cdylib"]
 name = "exa"
 path = "src/lib.rs"
 
@@ -18,3 +15,4 @@ regex = "1.5.4"
 simple-error = "0.2.3"
 itertools = "0.10.1"
 rand = "0.8.4"
+libretro-backend = "0.2.1"

@@ -143,6 +143,8 @@ pub struct VM<'a> {
     pub bus: Shared<MessageBus>,
 
     pub file_counter: Rc<AtomicI32>,
+
+    framebuffer: [bool; 120 * 100],
 }
 
 impl<'a> VM<'a> {
@@ -153,6 +155,7 @@ impl<'a> VM<'a> {
             exas: Vec::new(),
             bus: Rc::new(RefCell::new(MessageBus::new())),
             file_counter: Rc::new(AtomicI32::new(400)),
+            framebuffer: [false; 120 * 100],
         }
     }
 
@@ -245,6 +248,19 @@ impl<'a> VM<'a> {
             }
         }
         panic!("unknown exa {}", name)
+    }
+
+    // Update framebuffer based on current sprite info
+    // of running EXAs, then return ref to framebuffer.
+    pub fn render(&mut self) -> &[bool; 120 * 100] {
+        self.framebuffer.iter_mut().for_each(|m| *m = false);
+
+        for exa in self.exas.iter() {
+            for (x, y) in exa.borrow().pixels() {
+                self.framebuffer[(x + (y * 120)) as usize] = true;
+            }
+        }
+        &self.framebuffer
     }
 }
 
