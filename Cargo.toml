@@ -14,5 +14,11 @@ nom = "6.1.2"
 regex = "1.5.4"
 simple-error = "0.2.3"
 itertools = "0.10.1"
-rand = "0.8.4"
+fastrand = "1.4.1"
 libretro-backend = "0.2.1"
+
+[profile.release]
+lto = true
+
+[profile.dev]
+lto = true

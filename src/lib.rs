@@ -56,14 +56,24 @@ impl Core for Emulator<'_> {
         self.game_data = Some(game_data);
 
         self.vm = Some(VM::new_redshift());
-        let host = self.vm.as_ref().unwrap().hosts.get("core").unwrap().clone();
+        let host1 = self.vm.as_ref().unwrap().hosts.get("core").unwrap().clone();
+        let host2 = self.vm.as_ref().unwrap().hosts.get("core").unwrap().clone();
 
         Exa::spawn(
             &mut self.vm.as_mut().unwrap(),
-            host,
+            host1,
             "x0".to_string(),
             true,
             "copy 301 gp\n wait\n ",
+        )
+        .expect("cannot spawn");
+
+        Exa::spawn(
+            &mut self.vm.as_mut().unwrap(),
+            host2,
+            "x0".to_string(),
+            true,
+            "copy 302 gp\n mark a\n rand 0 100 gx\n jump a\n",
         )
         .expect("cannot spawn");
 
@@ -85,7 +95,7 @@ impl Core for Emulator<'_> {
     fn on_run(&mut self, handle: &mut RuntimeHandle) {
         let vm = self.vm.as_mut().unwrap();
 
-        vm.run_cycle();
+        vm.run_cycles(200000);
 
         Emulator::update_video_frame(&mut self.video_frame, vm.render());
         handle.upload_video_frame(&self.video_frame);
@@ -94,7 +104,9 @@ impl Core for Emulator<'_> {
         handle.upload_audio_frame(&audio);
     }
 
-    fn on_reset(&mut self) {}
+    fn on_reset(&mut self) {
+        self.vm.as_mut().unwrap().run_cycle();
+    }
 }
 
 libretro_core!(Emulator);

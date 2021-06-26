@@ -1,10 +1,15 @@
-use rand::seq::SliceRandom;
+use fastrand;
 
 use super::error::ExaError;
 use super::exa::Exa;
 use super::{Shared, VM};
 
 impl<'a> VM<'a> {
+    pub fn run_cycles(&mut self, num_cycles: usize) {
+        for _ in 0..num_cycles {
+            self.run_cycle();
+        }
+    }
     pub fn run_cycle(&mut self) {
         // Reset traversal status on all host links. These can only
         // support one EXA per cycle, others need to block.
@@ -127,7 +132,7 @@ impl<'a> VM<'a> {
             .collect();
 
         if other_killers.len() != 0 {
-            let choice = other_killers.choose(&mut rand::thread_rng()).unwrap();
+            let choice = &other_killers[fastrand::usize(..other_killers.len())];
             return Some(choice.clone());
         }
 
@@ -138,7 +143,7 @@ impl<'a> VM<'a> {
             .collect();
 
         if descendants.len() != 0 {
-            let choice = descendants.choose(&mut rand::thread_rng()).unwrap();
+            let choice = &descendants[fastrand::usize(..descendants.len())];
             return Some(choice.clone());
         }
 
@@ -149,11 +154,11 @@ impl<'a> VM<'a> {
             .collect();
 
         if ancestors.len() != 0 {
-            let choice = ancestors.choose(&mut rand::thread_rng()).unwrap();
+            let choice = &ancestors[fastrand::usize(..ancestors.len())];
             return Some(choice.clone());
         }
 
-        let choice = host_exas.choose(&mut rand::thread_rng()).unwrap();
+        let choice = &host_exas[fastrand::usize(..host_exas.len())];
         Some(choice.clone())
     }
 }

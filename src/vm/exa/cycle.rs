@@ -1,9 +1,7 @@
 use std::error::Error;
 use std::sync::atomic::Ordering;
 
-use rand::distributions::uniform::Uniform;
-use rand::distributions::Distribution;
-use rand::thread_rng;
+use fastrand;
 
 use super::super::error::ExaError;
 use super::super::file::File;
@@ -444,8 +442,7 @@ impl<'a> Exa<'a> {
             return Err(ExaError::Fatal("invalid rand range").into());
         }
 
-        let sampler = Uniform::new_inclusive(lo_value, hi_value);
-        let value = sampler.sample(&mut thread_rng());
+        let value = fastrand::i32(lo_value..hi_value + 1);
         match dest {
             Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
             Target::Register(r) => self.write_register(r, value),
