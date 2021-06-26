@@ -99,6 +99,8 @@ pub struct Exa<'a> {
     pub file: Option<File>,
 
     pub sprite: Sprite,
+
+    pub ran_test_mrd_this_cycle: bool,
 }
 
 impl PartialEq for Exa<'_> {
@@ -145,6 +147,7 @@ impl<'a> Exa<'a> {
             spawn_counter: Rc::new(AtomicU64::new(1)),
             file_counter: vm.file_counter.clone(),
             sprite: Sprite::empty(),
+            ran_test_mrd_this_cycle: false,
         }));
         vm.register_exa(e.clone());
         Ok(e)
@@ -177,6 +180,7 @@ impl<'a> Exa<'a> {
             spawn_counter: self.spawn_counter.clone(),
             file_counter: self.file_counter.clone(),
             sprite: self.sprite.clone(),
+            ran_test_mrd_this_cycle: false,
         }));
         vm.register_exa(e.clone());
         Ok(e)

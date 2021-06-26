@@ -61,12 +61,12 @@ impl<'a> VM<'a> {
         // like it needs to happen after everything
         // else, since it'll return True even if, on that cycle, reading
         // would have actually blocked. But the *next* cycle it won't block.
-        let test_mrds: Vec<Shared<Exa>> = self
-            .exas
-            .clone()
-            .into_iter()
-            .filter(|e| e.borrow().will_test_mrd_this_cycle())
-            .collect();
+        for exa in self.exas.iter() {
+            let mut e = exa.borrow_mut();
+            if e.will_test_mrd_this_cycle() {
+                e.ran_test_mrd_this_cycle = true;
+            }
+        }
 
         // Run EXA cycles
         let mut runnable: Vec<Shared<Exa>> = self
@@ -94,7 +94,11 @@ impl<'a> VM<'a> {
         }
 
         // Run the TEST MRDs from earlier.
-        for exa in test_mrds.iter() {
+        for exa in self
+            .exas
+            .iter()
+            .filter(|e| e.borrow().ran_test_mrd_this_cycle == true)
+        {
             exa.borrow_mut().test_mrd();
         }
 
