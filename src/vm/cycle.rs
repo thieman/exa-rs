@@ -10,6 +10,7 @@ impl<'a> VM<'a> {
             self.run_cycle();
         }
     }
+
     pub fn run_cycle(&mut self) {
         // Reset traversal status on all host links. These can only
         // support one EXA per cycle, others need to block.
@@ -46,12 +47,11 @@ impl<'a> VM<'a> {
         // you don't get to run anything else this cycle.
         let killers = self
             .exas
-            .clone()
-            .into_iter()
+            .iter()
             .filter(|e| e.borrow().will_kill_this_cycle());
 
         for killer in killers {
-            let kill_target = self.kill_target(killer);
+            let kill_target = self.kill_target(&killer.borrow());
             if kill_target.is_some() {
                 kill_target.unwrap().borrow_mut().error = Some(ExaError::Fatal("killed").into());
             }
@@ -112,8 +112,8 @@ impl<'a> VM<'a> {
     /// - everyone else
     /// We take the first group that has any members, and pick a random
     /// as-of-yet unkilled member from it, then kill it.
-    fn kill_target(&mut self, killer: Shared<Exa<'a>>) -> Option<Shared<Exa<'a>>> {
-        let k = killer.borrow();
+    fn kill_target(&self, killer: &Exa<'a>) -> Option<Shared<Exa<'a>>> {
+        let k = killer;
         let host_exas: Vec<Shared<Exa<'a>>> = self
             .exas
             .clone()
@@ -139,7 +139,7 @@ impl<'a> VM<'a> {
         let descendants: Vec<Shared<Exa<'a>>> = host_exas
             .clone()
             .into_iter()
-            .filter(|e| e.borrow().descendant_of(killer.clone()))
+            .filter(|e| e.borrow().descendant_of(killer))
             .collect();
 
         if descendants.len() != 0 {
@@ -150,7 +150,7 @@ impl<'a> VM<'a> {
         let ancestors: Vec<Shared<Exa<'a>>> = host_exas
             .clone()
             .into_iter()
-            .filter(|e| e.borrow().ancestor_of(killer.clone()))
+            .filter(|e| e.borrow().ancestor_of(killer))
             .collect();
 
         if ancestors.len() != 0 {

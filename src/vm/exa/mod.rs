@@ -277,12 +277,12 @@ impl<'a> Exa<'a> {
         }
     }
 
-    pub fn descendant_of(&self, other: Shared<Exa<'a>>) -> bool {
-        self.base_name == other.borrow().base_name && self.spawn_id > other.borrow().spawn_id
+    pub fn descendant_of(&self, other: &Exa<'a>) -> bool {
+        self.base_name == other.base_name && self.spawn_id > other.spawn_id
     }
 
-    pub fn ancestor_of(&self, other: Shared<Exa<'a>>) -> bool {
-        self.base_name == other.borrow().base_name && self.spawn_id < other.borrow().spawn_id
+    pub fn ancestor_of(&self, other: &Exa<'a>) -> bool {
+        self.base_name == other.base_name && self.spawn_id < other.spawn_id
     }
 
     // Returns (x,y) vector of currently enabled pixels
