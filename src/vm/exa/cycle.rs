@@ -105,7 +105,10 @@ impl<'a> Exa<'a> {
             // data is handled when EXAs are spawned at the beginning of the program
             Instruction::Data(_) => Ok(()),
             // waits freeze until the draw routine unfreezes
-            Instruction::Wait => Err(ExaError::Freezing("waiting").into()),
+            Instruction::Wait => {
+                self.waiting = true;
+                Err(ExaError::Freezing("waiting").into())
+            }
         };
 
         self.error = match result {

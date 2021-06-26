@@ -101,6 +101,7 @@ pub struct Exa<'a> {
     pub sprite: Sprite,
 
     pub ran_test_mrd_this_cycle: bool,
+    pub waiting: bool,
 }
 
 impl PartialEq for Exa<'_> {
@@ -148,6 +149,7 @@ impl<'a> Exa<'a> {
             file_counter: vm.file_counter.clone(),
             sprite: Sprite::empty(),
             ran_test_mrd_this_cycle: false,
+            waiting: false,
         }));
         vm.register_exa(e.clone());
         Ok(e)
@@ -181,6 +183,7 @@ impl<'a> Exa<'a> {
             file_counter: self.file_counter.clone(),
             sprite: self.sprite.clone(),
             ran_test_mrd_this_cycle: false,
+            waiting: false,
         }));
         vm.register_exa(e.clone());
         Ok(e)
@@ -291,12 +294,16 @@ impl<'a> Exa<'a> {
 
     // Returns (x,y) vector of currently enabled pixels
     pub fn pixels(&self) -> Vec<(usize, usize)> {
-        let x = self.registers.gx.borrow().value as usize;
-        let y = self.registers.gy.borrow().value as usize;
+        let x = self.registers.gx.borrow().value;
+        let y = self.registers.gy.borrow().value;
         let mut v = vec![];
         for (idx, pixel) in self.sprite.pixels.iter().enumerate() {
             if *pixel {
-                v.push(((idx % 10) + x, (idx / 10) + y));
+                let this_x = (idx as i32 % 10) + x;
+                let this_y = (idx as i32 / 10) + y;
+                if 0 <= this_x && 119 >= this_x && 0 <= this_y && 99 >= this_y {
+                    v.push((this_x as usize, this_y as usize));
+                }
             }
         }
         v

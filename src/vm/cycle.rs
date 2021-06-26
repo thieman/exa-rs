@@ -5,9 +5,41 @@ use super::exa::Exa;
 use super::{Shared, VM};
 
 impl<'a> VM<'a> {
+    /// Run the VM for one animation frame at 30hz. The
+    /// tricky part here is that how many cycles constitutes
+    /// a frames seems to be undefined and/or dynamic.
+    /// From observation, it seems that the cycles per frame
+    /// do decrease when more EXAs are alive, and it also
+    /// seems that there may be a hardcoded cycle count
+    /// rather than simply running as fast as the CPU will
+    /// allow. To try to mimic that behavior, and allow
+    /// some determinism, we have set cycle counts based
+    /// on how many EXAs are currently alive.
+    pub fn run_for_frame(&mut self) {
+        let cycles = match self.exas.len() {
+            0 => 0,
+            1 => 20000,
+            2 => 15000,
+            3..=5 => 10000,
+            6..=10 => 5000,
+            _ => 2500,
+        };
+        self.run_cycles(cycles);
+    }
+
     pub fn run_cycles(&mut self, num_cycles: usize) {
         for _ in 0..num_cycles {
             self.run_cycle();
+        }
+    }
+
+    pub fn unfreeze_waiters(&self) {
+        for e in self.exas.iter() {
+            let mut exa = e.borrow_mut();
+            if exa.waiting {
+                exa.waiting = false;
+                exa.unfreeze();
+            }
         }
     }
 
