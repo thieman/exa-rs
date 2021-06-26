@@ -80,3 +80,15 @@ fn two_directional_blocking_bandwidth() {
     bench.run_cycle();
     bench.assert_position(&e2, "start");
 }
+
+#[test]
+fn test_redshift_links() {
+    let mut bench = TestBench::redshift_vm();
+    let e1 =
+        bench.exa("link 800\n link -1\n link 801\n link -1 \n link 802 \n link -1\n link 803 \n");
+
+    for _ in 0..=5 {
+        bench.run_cycle();
+        bench.assert_no_error(&e1);
+    }
+}

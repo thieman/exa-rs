@@ -38,8 +38,9 @@ fn test_repl_blocks_when_full() {
     let _ = bench.exa("noop \n noop\n");
     let _ = bench.exa("noop \n noop\n");
     let _ = bench.exa("noop \n noop\n");
-    let e4 = bench.exa("mark start\n repl start\n");
+    let _ = bench.exa("noop \n noop\n");
+    let e5 = bench.exa("mark start\n repl start\n");
 
     bench.run_cycle();
-    bench.assert_blocking_error(&e4);
+    bench.assert_blocking_error(&e5);
 }

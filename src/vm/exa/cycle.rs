@@ -103,7 +103,7 @@ impl<'a> Exa<'a> {
             // test mrd is handled in the VM's run_cycle, after everything else
             Instruction::TestMrd => Ok(()),
             // data is handled when EXAs are spawned at the beginning of the program
-            Instruction::Data(_) => Ok(()),
+            Instruction::Data(_) => panic!("datas should have been preprocessed out"),
             // waits freeze until the draw routine unfreezes
             Instruction::Wait => {
                 self.waiting = true;
@@ -143,8 +143,10 @@ impl<'a> Exa<'a> {
         let link_id = self.read_target(dest)?;
 
         let start_host = self.host.clone();
+        let start_host_name = start_host.borrow().name.to_string();
         {
-            let links = &mut start_host.borrow_mut().links;
+            let s = &mut start_host.borrow_mut();
+            let links = &mut s.links;
             let link = links.get_mut(&link_id);
 
             if link.is_none() {
@@ -162,7 +164,7 @@ impl<'a> Exa<'a> {
                 .map_err(|_| Box::new(ExaError::Blocking("destination host is full")))?;
 
             for back_link in to_host.links.values_mut() {
-                if back_link.to_host == start_host {
+                if back_link.to_host_name == start_host_name {
                     back_link.traversed_this_cycle = true;
                 }
             }

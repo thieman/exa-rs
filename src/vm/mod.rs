@@ -91,6 +91,8 @@ impl<'a> Host<'_> {
     }
 
     pub fn add_register(&mut self, name: String, register: Shared<Register>) {
+        self.reserve_slot()
+            .expect("cannot add register, host is full");
         self.registers.insert(name.to_ascii_lowercase(), register);
     }
 }
@@ -121,6 +123,7 @@ impl fmt::Display for Host<'_> {
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct HostLink<'a> {
+    pub to_host_name: String,
     pub to_host: Shared<Host<'a>>,
     // links can only support one traversal per cycle
     pub traversed_this_cycle: bool,
@@ -177,7 +180,9 @@ impl<'a> VM<'a> {
         from_host: Shared<Host<'b>>,
         to_host: Shared<Host<'b>>,
     ) {
+        let name = to_host.borrow().name.to_string();
         let link = HostLink {
+            to_host_name: name,
             to_host: to_host,
             traversed_this_cycle: false,
         };

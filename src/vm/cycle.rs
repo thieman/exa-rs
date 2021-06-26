@@ -58,6 +58,8 @@ impl<'a> VM<'a> {
             let exa = &self.exas[i];
             if exa.borrow().is_fatal() {
                 // TODO: Drop file
+                println!("{}", exa.borrow());
+                println!("{:?}", exa.borrow().error);
                 exa.borrow_mut().host.borrow_mut().free_slot();
                 self.exas.remove(i);
             } else {

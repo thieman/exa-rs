@@ -124,8 +124,8 @@ impl<'a> Exa<'a> {
         // TODO: VM check on name uniqueness
         host.borrow_mut().reserve_slot()?;
         let mut insts = parse_text(script).unwrap();
-        let labels = Exa::extract_labels(&mut insts);
         let data_file = Exa::extract_data(&mut insts, vm.file_counter.clone());
+        let labels = Exa::extract_labels(&mut insts);
         let e = Rc::new(RefCell::new(Exa {
             base_name: name.clone(),
             spawn_id: 0,
@@ -319,6 +319,8 @@ impl fmt::Display for Exa<'_> {
         if self.pc < self.instructions.len() {
             write!(f, "\t{:?}", self.instructions[self.pc])?;
         }
+        write!(f, "\t{:?}", self.instructions)?;
+        write!(f, "\t{:?}", self.labels)?;
         Ok(())
     }
 }

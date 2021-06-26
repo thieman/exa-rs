@@ -24,11 +24,11 @@ impl fmt::Display for TestBench<'_> {
 
 #[allow(dead_code)]
 impl<'a> TestBench<'a> {
-    /// basic_vm provides a VM with two hosts, each with capacity 4.
+    /// basic_vm provides a VM with two hosts, each with capacity 6.
     /// Host "start" is linked to host "end" via a 800<->-1 link. A
     /// ReadWrite register #REG exists in "one" and is initialized to 100.
     pub fn basic_vm() -> TestBench<'a> {
-        let h1 = Host::new_shared(String::from("start"), 4);
+        let h1 = Host::new_shared(String::from("start"), 6);
         let r = Register::new(Permissions::ReadWrite, 100);
         h1.borrow_mut()
             .add_register(String::from("#REG"), Rc::new(RefCell::new(r)));
