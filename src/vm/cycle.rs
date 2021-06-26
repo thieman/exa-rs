@@ -68,19 +68,14 @@ impl<'a> VM<'a> {
             }
         }
 
-        // Run EXA cycles
-        let mut runnable: Vec<Shared<Exa>> = self
-            .exas
-            .clone()
-            .into_iter()
-            // Do not run frozen EXAs until something else thaws them
-            .filter(|e| !e.borrow().is_frozen())
-            // Do not run EXAs that were just killed
-            .filter(|e| !e.borrow().is_fatal())
-            .collect();
+        self.exa_stack.clone_from(&self.exas);
+        self.exa_stack.retain(|exa| {
+            let e = exa.borrow();
+            !e.is_frozen() && !e.is_fatal()
+        });
 
-        while runnable.len() != 0 {
-            let exa = runnable.remove(0);
+        while self.exa_stack.len() != 0 {
+            let exa = self.exa_stack.remove(0);
             let mut exa_mut = exa.borrow_mut();
             let result = exa_mut.run_cycle(self);
 
@@ -88,7 +83,7 @@ impl<'a> VM<'a> {
                 let to_unfreeze = self.get_exa(e);
                 to_unfreeze.borrow_mut().unfreeze();
                 if !to_unfreeze.borrow_mut().is_fatal() {
-                    runnable.push(to_unfreeze);
+                    self.exa_stack.push(to_unfreeze);
                 }
             }
         }

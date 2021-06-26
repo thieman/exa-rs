@@ -140,6 +140,8 @@ pub struct VM<'a> {
 
     pub exas: Vec<Shared<Exa<'a>>>,
 
+    exa_stack: Vec<Shared<Exa<'a>>>,
+
     pub bus: Shared<MessageBus>,
 
     pub file_counter: Rc<AtomicI32>,
@@ -153,6 +155,7 @@ impl<'a> VM<'a> {
             cycle: 0,
             hosts: HashMap::new(),
             exas: Vec::new(),
+            exa_stack: Vec::new(),
             bus: Rc::new(RefCell::new(MessageBus::new())),
             file_counter: Rc::new(AtomicI32::new(400)),
             framebuffer: [false; 120 * 100],
