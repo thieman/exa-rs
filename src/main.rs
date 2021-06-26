@@ -26,7 +26,12 @@ fn main() {
     )
     .expect("cannot spawn");
 
+    let mut cycle = 0;
     loop {
         vm.run_cycle();
+        cycle += 1;
+        if cycle % 1000000 == 0 {
+            println!("{}", cycle);
+        }
     }
 }
