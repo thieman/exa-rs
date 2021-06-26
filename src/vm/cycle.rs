@@ -5,6 +5,11 @@ use super::exa::Exa;
 use super::{Shared, VM};
 
 impl<'a> VM<'a> {
+    pub fn run_cycles(&mut self, num_cycles: usize) {
+        for _ in 0..num_cycles {
+            self.run_cycle()
+        }
+    }
     pub fn run_cycle(&mut self) {
         // Reset traversal status on all host links. These can only
         // support one EXA per cycle, others need to block.

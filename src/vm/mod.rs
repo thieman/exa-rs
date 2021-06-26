@@ -23,6 +23,7 @@ pub mod exa;
 pub mod file;
 pub mod instruction;
 pub mod register;
+pub mod runtime;
 
 pub type Shared<T> = Rc<RefCell<T>>;
 
