@@ -23,7 +23,8 @@ regex = "1.5.4"
 simple-error = "0.2.3"
 itertools = "0.10.1"
 fastrand = "1.4.1"
-libretro-backend = "0.2.1"
+libretro-sys = "0.1"
+libc = "0.2"
 
 [dev-dependencies]
 criterion = "0.3"

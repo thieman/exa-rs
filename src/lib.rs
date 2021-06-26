@@ -1,9 +1,9 @@
-extern crate libretro_backend;
+mod libretro;
 
 pub mod parse;
 pub mod vm;
 
-use libretro_backend::*;
+use libretro::*;
 
 use vm::exa::Exa;
 use vm::VM;
@@ -95,7 +95,7 @@ impl Core for Emulator<'_> {
     fn on_run(&mut self, handle: &mut RuntimeHandle) {
         let vm = self.vm.as_mut().unwrap();
 
-        vm.run_cycles(200000);
+        vm.run_cycles(2000);
 
         Emulator::update_video_frame(&mut self.video_frame, vm.render());
         handle.upload_video_frame(&self.video_frame);
