@@ -251,18 +251,6 @@ pub struct Retro<B: Core> {
     total_audio_samples_uploaded: usize,
 }
 
-macro_rules! set_callback {
-    ($output: expr, $input: expr) => {
-        unsafe {
-            if $input == mem::transmute(0 as usize) {
-                $output = None;
-            } else {
-                $output = Some($input);
-            }
-        }
-    };
-}
-
 impl<B: Core> Retro<B> {
     fn new(core: B) -> Self {
         Retro {
@@ -314,7 +302,6 @@ impl<B: Core> Retro<B> {
     pub fn on_set_environment(callback: Option<libretro_sys::EnvironmentFn>) {
         unsafe {
             if callback.is_none() {
-                // || callback.unwrap() == mem::transmute(0 as usize) {
                 ENVIRONMENT_CALLBACK = None;
             } else {
                 ENVIRONMENT_CALLBACK = callback;
@@ -322,24 +309,27 @@ impl<B: Core> Retro<B> {
         }
     }
 
-    pub fn on_set_video_refresh(&mut self, callback: libretro_sys::VideoRefreshFn) {
-        set_callback!(self.video_refresh_callback, callback);
+    pub fn on_set_video_refresh(&mut self, callback: Option<libretro_sys::VideoRefreshFn>) {
+        self.video_refresh_callback = callback;
     }
 
-    pub fn on_set_audio_sample(&mut self, callback: libretro_sys::AudioSampleFn) {
-        set_callback!(self.audio_sample_callback, callback);
+    pub fn on_set_audio_sample(&mut self, callback: Option<libretro_sys::AudioSampleFn>) {
+        self.audio_sample_callback = callback;
     }
 
-    pub fn on_set_audio_sample_batch(&mut self, callback: libretro_sys::AudioSampleBatchFn) {
-        set_callback!(self.audio_sample_batch_callback, callback);
+    pub fn on_set_audio_sample_batch(
+        &mut self,
+        callback: Option<libretro_sys::AudioSampleBatchFn>,
+    ) {
+        self.audio_sample_batch_callback = callback;
     }
 
-    pub fn on_set_input_poll(&mut self, callback: libretro_sys::InputPollFn) {
-        set_callback!(self.input_poll_callback, callback);
+    pub fn on_set_input_poll(&mut self, callback: Option<libretro_sys::InputPollFn>) {
+        self.input_poll_callback = callback;
     }
 
-    pub fn on_set_input_state(&mut self, callback: libretro_sys::InputStateFn) {
-        set_callback!(self.input_state_callback, callback);
+    pub fn on_set_input_state(&mut self, callback: Option<libretro_sys::InputStateFn>) {
+        self.input_state_callback = callback;
     }
 
     pub fn on_get_system_av_info(&mut self, info: *mut libretro_sys::SystemAvInfo) {
@@ -436,9 +426,9 @@ impl<B: Core> Retro<B> {
 
     pub fn on_run(&mut self) {
         let mut handle = RuntimeHandle {
-            video_refresh_callback: self.video_refresh_callback.unwrap(),
-            input_state_callback: self.input_state_callback.unwrap(),
-            audio_sample_batch_callback: self.audio_sample_batch_callback.unwrap(),
+            video_refresh_callback: self.video_refresh_callback,
+            input_state_callback: self.input_state_callback,
+            audio_sample_batch_callback: self.audio_sample_batch_callback,
             upload_video_frame_already_called: false,
             audio_samples_uploaded: 0,
 
@@ -528,9 +518,9 @@ impl<B: Core> Retro<B> {
 }
 
 pub struct RuntimeHandle {
-    video_refresh_callback: libretro_sys::VideoRefreshFn,
-    input_state_callback: libretro_sys::InputStateFn,
-    audio_sample_batch_callback: libretro_sys::AudioSampleBatchFn,
+    video_refresh_callback: Option<libretro_sys::VideoRefreshFn>,
+    input_state_callback: Option<libretro_sys::InputStateFn>,
+    audio_sample_batch_callback: Option<libretro_sys::AudioSampleBatchFn>,
     upload_video_frame_already_called: bool,
     audio_samples_uploaded: usize,
 
@@ -557,7 +547,7 @@ impl RuntimeHandle {
         let height = self.video_height as libc::c_uint;
         let bytes_per_line = (self.video_width * self.video_frame_bytes_per_pixel) as usize;
         unsafe {
-            (self.video_refresh_callback)(bytes, width, height, bytes_per_line);
+            (self.video_refresh_callback.unwrap())(bytes, width, height, bytes_per_line);
         }
     }
 
@@ -566,7 +556,7 @@ impl RuntimeHandle {
 
         self.audio_samples_uploaded += data.len();
         unsafe {
-            (self.audio_sample_batch_callback)(data.as_ptr(), data.len() / 2);
+            (self.audio_sample_batch_callback.unwrap())(data.as_ptr(), data.len() / 2);
         }
     }
 
@@ -591,8 +581,12 @@ impl RuntimeHandle {
         };
 
         unsafe {
-            let value =
-                (self.input_state_callback)(port, libretro_sys::DEVICE_JOYPAD, 0, device_id);
+            let value = (self.input_state_callback.unwrap())(
+                port,
+                libretro_sys::DEVICE_JOYPAD,
+                0,
+                device_id,
+            );
             return value == 1;
         }
     }
@@ -621,7 +615,6 @@ macro_rules! libretro_core {
             assert!(LIBRETRO_INSTANCE.is_none());
             let retro = $crate::construct::<$core>();
             LIBRETRO_INSTANCE = Some(Box::into_raw(Box::new(retro)));
-            println!("assigned libretro instance");
         }
 
         #[doc(hidden)]
@@ -647,7 +640,7 @@ macro_rules! libretro_core {
             callback: $crate::libretro_sys::VideoRefreshFn,
         ) {
             // assert_ne!(LIBRETRO_INSTANCE, 0 as *mut _);
-            (&mut *LIBRETRO_INSTANCE.unwrap()).on_set_video_refresh(callback);
+            (&mut *LIBRETRO_INSTANCE.unwrap()).on_set_video_refresh(Some(callback));
         }
 
         #[doc(hidden)]
@@ -656,7 +649,7 @@ macro_rules! libretro_core {
             callback: $crate::libretro_sys::AudioSampleFn,
         ) {
             // assert_ne!(LIBRETRO_INSTANCE, 0 as *mut _);
-            (&mut *LIBRETRO_INSTANCE.unwrap()).on_set_audio_sample(callback)
+            (&mut *LIBRETRO_INSTANCE.unwrap()).on_set_audio_sample(Some(callback))
         }
 
         #[doc(hidden)]
@@ -665,14 +658,14 @@ macro_rules! libretro_core {
             callback: $crate::libretro_sys::AudioSampleBatchFn,
         ) {
             // assert_ne!(LIBRETRO_INSTANCE, 0 as *mut _);
-            (&mut *LIBRETRO_INSTANCE.unwrap()).on_set_audio_sample_batch(callback)
+            (&mut *LIBRETRO_INSTANCE.unwrap()).on_set_audio_sample_batch(Some(callback))
         }
 
         #[doc(hidden)]
         #[no_mangle]
         pub unsafe extern "C" fn retro_set_input_poll(callback: $crate::libretro_sys::InputPollFn) {
             // assert_ne!(LIBRETRO_INSTANCE, 0 as *mut _);
-            (&mut *LIBRETRO_INSTANCE.unwrap()).on_set_input_poll(callback)
+            (&mut *LIBRETRO_INSTANCE.unwrap()).on_set_input_poll(Some(callback))
         }
 
         #[doc(hidden)]
@@ -681,7 +674,7 @@ macro_rules! libretro_core {
             callback: $crate::libretro_sys::InputStateFn,
         ) {
             // assert_ne!(LIBRETRO_INSTANCE, 0 as *mut _);
-            (&mut *LIBRETRO_INSTANCE.unwrap()).on_set_input_state(callback)
+            (&mut *LIBRETRO_INSTANCE.unwrap()).on_set_input_state(Some(callback))
         }
 
         #[doc(hidden)]
