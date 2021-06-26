@@ -1,9 +1,9 @@
-extern crate libretro_backend;
+mod libretro;
 
 pub mod parse;
 pub mod vm;
 
-use libretro_backend::*;
+use libretro::*;
 
 use vm::exa::Exa;
 use vm::VM;
