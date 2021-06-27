@@ -129,7 +129,7 @@ pub struct HostLink<'a> {
     pub traversed_this_cycle: bool,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Permissions {
     Denied,
     ReadOnly,
@@ -220,10 +220,14 @@ impl fmt::Display for VM<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "VM (cycle:{})", self.cycle)?;
         for h in self.hosts.values().sorted() {
-            write!(f, "\n\t{}", h.borrow())?;
+            let host = h.borrow();
+            write!(f, "\n{}", host)?;
+            for file in host.files.iter() {
+                write!(f, "{}", file)?;
+            }
             for e in self.exas.iter() {
                 if e.borrow().host == *h {
-                    write!(f, "\n\t\t{}", e.borrow())?;
+                    write!(f, "\n{}", e.borrow())?;
                 }
             }
         }

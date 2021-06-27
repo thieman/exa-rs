@@ -124,13 +124,18 @@ impl Core for Emulator<'_> {
             vm.input_pressed(RedshiftButton::Right);
         }
 
-        if handle.is_joypad_button_pressed(0, JoypadButton::Start) {
+        vm.unfreeze_waiters();
+
+        if handle.is_joypad_button_pressed(0, JoypadButton::Select) {
+            println!("\x1B[2J\x1B[1;1H");
+        }
+
+        if handle.is_joypad_button_pressed(0, JoypadButton::X) {
+            vm.run_cycle();
             println!("{}", vm);
         }
 
-        vm.unfreeze_waiters();
-
-        vm.run_for_frame();
+        // vm.run_for_frame();
 
         Emulator::update_video_frame(&mut self.video_frame, vm.render());
         handle.upload_video_frame(&self.video_frame);

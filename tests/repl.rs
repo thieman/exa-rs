@@ -44,3 +44,18 @@ fn test_repl_blocks_when_full() {
     bench.run_cycle();
     bench.assert_blocking_error(&e5);
 }
+
+/// Regression test for EXAs passing references, rather than fresh clones,
+/// of their registers to their descendants upon REPL
+#[test]
+fn test_repl_independent_registers() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("mark start\n copy 1 x \n repl start \n copy 2 x\n noop\n");
+
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    let e2 = bench.get_exa("x0:1");
+    bench.assert_exa_register(&e1, "x", 2);
+    bench.assert_exa_register(&e2, "x", 1);
+}

@@ -59,11 +59,20 @@ impl Registers {
         }
     }
 
+    /// "True" clone that creates new registers for the descendant EXA,
+    /// not new references to the original (which is what happens with
+    /// a normal clone given we're working with Rcs)
     pub fn clone_for_repl(&self) -> Registers {
-        let r = self.clone();
-        r.gp.borrow_mut().value = 0;
-        r.ci.borrow_mut().value = -9999;
-        r
+        Registers {
+            x: Register::new_shared(self.x.borrow().permissions.clone(), self.x.borrow().value),
+            t: Register::new_shared(self.t.borrow().permissions.clone(), self.t.borrow().value),
+            gx: Register::new_shared(self.gx.borrow().permissions.clone(), self.gx.borrow().value),
+            gy: Register::new_shared(self.gy.borrow().permissions.clone(), self.gy.borrow().value),
+            gz: Register::new_shared(self.gz.borrow().permissions.clone(), self.gz.borrow().value),
+            gp: Register::new_shared(self.gp.borrow().permissions.clone(), 0),
+            ci: Register::new_shared(self.ci.borrow().permissions.clone(), -9999),
+            co: Register::new_shared(self.co.borrow().permissions.clone(), self.co.borrow().value),
+        }
     }
 }
 
@@ -312,15 +321,34 @@ impl<'a> Exa<'a> {
 
 impl fmt::Display for Exa<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Exa {} pc:{}", self.name, self.pc)?;
+        write!(
+            f,
+            "\tExa {} pc:{} fp:{}",
+            self.name, self.pc, self.file_pointer
+        )?;
+
         if let Some(e) = &self.error {
             write!(f, " (error: {})", e)?;
+        } else {
+            write!(f, " (error: None)")?;
         }
+
         if self.pc < self.instructions.len() {
-            write!(f, "\t{:?}", self.instructions[self.pc])?;
+            write!(f, "\n\tInst: {:?}", self.instructions[self.pc])?;
         }
-        write!(f, "\t{:?}", self.instructions)?;
-        write!(f, "\t{:?}", self.labels)?;
+
+        write!(
+            f,
+            "\n\tX: {} T: {}",
+            &self.registers.x.borrow().value,
+            &self.registers.t.borrow().value
+        )?;
+
+        if let Some(file) = &self.file {
+            write!(f, "\nHeld: {}", file)?;
+        }
+
+        write!(f, "\n")?;
         Ok(())
     }
 }
