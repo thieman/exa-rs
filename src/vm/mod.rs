@@ -193,8 +193,10 @@ impl<'a> VM<'a> {
     }
     pub fn get_exa(&self, name: &str) -> Shared<Exa<'a>> {
         for e in self.exas.iter() {
-            if e.borrow().name == name {
-                return e.clone();
+            if let Ok(exa) = e.try_borrow() {
+                if exa.name == name {
+                    return e.clone();
+                }
             }
         }
         panic!("unknown exa {}", name)
