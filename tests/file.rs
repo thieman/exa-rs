@@ -148,3 +148,17 @@ fn test_eof_error() {
     bench.run_cycle();
     bench.assert_fatal_error(&e1);
 }
+
+#[test]
+fn file_drop_resets_file_pointer() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("make\n copy 1 f\n copy 2 f\n drop\n grab 400\n copy f t\n noop\n");
+
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.assert_exa_register(&e1, "t", 1);
+}

@@ -352,6 +352,7 @@ impl<'a> Exa<'a> {
 
         let f = self.file.take();
         host_mut.files.push(f.unwrap());
+        self.file_pointer = 0;
 
         Ok(())
     }

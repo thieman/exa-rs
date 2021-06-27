@@ -223,7 +223,7 @@ impl fmt::Display for VM<'_> {
             let host = h.borrow();
             write!(f, "\n{}", host)?;
             for file in host.files.iter() {
-                write!(f, "{}", file)?;
+                write!(f, " {}", file)?;
             }
             for e in self.exas.iter() {
                 if e.borrow().host == *h {

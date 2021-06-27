@@ -99,6 +99,7 @@ impl Core for Emulator<'_> {
         let vm = self.vm.as_mut().unwrap();
 
         vm.reset_inputs();
+        vm.unfreeze_waiters();
         if handle.is_joypad_button_pressed(0, JoypadButton::Y) {
             vm.input_pressed(RedshiftButton::X);
         }
@@ -122,9 +123,9 @@ impl Core for Emulator<'_> {
         }
         if handle.is_joypad_button_pressed(0, JoypadButton::Right) {
             vm.input_pressed(RedshiftButton::Right);
+            vm.run_cycle();
+            println!("{}", vm);
         }
-
-        vm.unfreeze_waiters();
 
         if handle.is_joypad_button_pressed(0, JoypadButton::Select) {
             println!("\x1B[2J\x1B[1;1H");
