@@ -123,8 +123,6 @@ impl Core for Emulator<'_> {
         }
         if handle.is_joypad_button_pressed(0, JoypadButton::Right) {
             vm.input_pressed(RedshiftButton::Right);
-            vm.run_cycle();
-            println!("{}", vm);
         }
 
         if handle.is_joypad_button_pressed(0, JoypadButton::Select) {
@@ -136,7 +134,7 @@ impl Core for Emulator<'_> {
             println!("{}", vm);
         }
 
-        // vm.run_for_frame();
+        vm.run_for_frame();
 
         Emulator::update_video_frame(&mut self.video_frame, vm.render());
         handle.upload_video_frame(&self.video_frame);

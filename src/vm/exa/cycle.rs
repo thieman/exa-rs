@@ -373,19 +373,28 @@ impl<'a> Exa<'a> {
             return Err(ExaError::Fatal("cannot grab a second file").into());
         }
 
-        let files = &mut self.host.borrow_mut().files;
-        let mut i = 0;
-        while i < files.len() {
-            let f = &files[i];
-            if f.id == file_id {
-                self.file = Some(files.remove(i));
-                return Ok(());
-            } else {
-                i += 1;
+        let mut ok = false;
+        {
+            let files = &mut self.host.borrow_mut().files;
+            let mut i = 0;
+            while i < files.len() {
+                let f = &files[i];
+                if f.id == file_id {
+                    self.file = Some(files.remove(i));
+                    ok = true;
+                    break;
+                } else {
+                    i += 1;
+                }
             }
         }
 
-        Err(ExaError::Fatal("file id not found").into())
+        if ok {
+            self.host.borrow_mut().free_slot();
+            Ok(())
+        } else {
+            Err(ExaError::Fatal("file id not found").into())
+        }
     }
 
     fn seek_file(&mut self, target: &Target) -> ExaResult {

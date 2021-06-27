@@ -148,6 +148,12 @@ impl<'a> TestBench<'a> {
         panic!("file not found");
     }
 
+    pub fn assert_host_occupied_slots(&self, hostname: &str, occupied: usize) {
+        let vm = self.vm.borrow();
+        let host = vm.hosts.get(hostname).expect("unknown host");
+        assert_eq!(host.borrow().occupied, occupied);
+    }
+
     pub fn assert_host_no_file(&self, hostname: &str, file_id: i32) {
         let vm = self.vm.borrow();
         let host = vm.hosts.get(hostname).expect("unknown host");
