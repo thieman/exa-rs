@@ -132,12 +132,14 @@ impl AudioVideoInfo {
         self
     }
 
+    #[allow(dead_code)]
     pub fn max_video_size(mut self, max_width: u32, max_height: u32) -> Self {
         self.max_width = max(self.max_width, max_width);
         self.max_height = max(self.max_height, max_height);
         self
     }
 
+    #[allow(dead_code)]
     pub fn aspect_ratio(mut self, aspect_ratio: f32) -> Self {
         self.aspect_ratio = Some(aspect_ratio);
         self
@@ -194,6 +196,7 @@ pub enum LoadGameResult {
     Failed(GameData),
 }
 
+#[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum JoypadButton {
     A,
@@ -236,6 +239,7 @@ pub trait Core: Default {
 
 static mut ENVIRONMENT_CALLBACK: Option<libretro_sys::EnvironmentFn> = None;
 
+#[allow(dead_code)]
 #[doc(hidden)]
 pub struct Retro<B: Core> {
     video_refresh_callback: Option<libretro_sys::VideoRefreshFn>,
@@ -451,10 +455,8 @@ impl<B: Core> Retro<B> {
             (self.av_info.audio_sample_rate / self.av_info.frames_per_second) * 2.0;
         assert!(
             self.total_audio_samples_uploaded as f64 >= required_audio_sample_count_per_frame,
-            format!(
-                "You need to upload at least {} audio samples each frame!",
-                required_audio_sample_count_per_frame
-            )
+            "You need to upload at least {} audio samples each frame!",
+            required_audio_sample_count_per_frame
         );
 
         self.total_audio_samples_uploaded -= required_audio_sample_count_per_frame as usize;
