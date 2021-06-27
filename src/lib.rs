@@ -60,7 +60,8 @@ impl Core for Emulator<'_> {
         let host1 = self.vm.as_ref().unwrap().hosts.get("core").unwrap().clone();
         let _host2 = self.vm.as_ref().unwrap().hosts.get("core").unwrap().clone();
 
-        Exa::spawn(
+        if true {
+            Exa::spawn(
             &mut self.vm.as_mut().unwrap(),
             host1.clone(),
             "x0".to_string(),
@@ -69,7 +70,7 @@ impl Core for Emulator<'_> {
         )
         .expect("cannot spawn");
 
-        Exa::spawn(
+            Exa::spawn(
             &mut self.vm.as_mut().unwrap(),
             host1.clone(),
             "x1".to_string(),
@@ -77,6 +78,7 @@ impl Core for Emulator<'_> {
             "MODE\n MARK START\n LINK 800\n \n ; WAIT FOR CLEAR DPAD\n ; BEFORE CONTINUING TO\n ; AVOID REPEAT INPUT\n MARK WAITFORCLEAR\n WAIT\n TEST #PADX = #PADY\n FJMP WAITFORCLEAR\n \n MARK INPUT\n COPY #PADX X\n TEST X = 1\n TJMP RIGHTSTART\n \n TEST X = -1\n TJMP LEFTSTART\n \n COPY #PADY X\n TEST X = 1\n TJMP DOWNSTART\n \n TEST X = -1\n TJMP UPSTART\n \n WAIT\n JUMP INPUT\n \n ; GX CURRENT POS\n ; GY NEXT POS TO CHECK\n ; X CURRENT VAL\n ; CO LOOP VAR\n \n MARK RIGHTSTART\n LINK -1\n GRAB 400\n \n COPY -1 CO\n \n MARK RIGHTLOOP\n ADDI 1 CO CO\n \n ; MAP CO TO GX GY\n MODI CO 4 X\n MULI 4 X X\n ADDI 2 X X\n DIVI CO 4 GX\n SUBI X GX GX\n \n SEEK -9999\n SEEK GX\n COPY F X\n TEST X = 0\n TJMP RIGHTNEXTREP\n COPY GX GY\n \n ; LOOP FOR EACH GY GOING\n ; RIGHT UNTIL WE HIT ONE\n MARK RIGHTGYLOOP\n ADDI GY 1 GY\n \n SEEK -9999\n SEEK GY\n TEST X = F\n FJMP RIGHTNOMATCH\n \n ; MERGE RIGHT\n SEEK -9999\n SEEK GY\n ADDI X 1 F\n SEEK -9999\n SEEK GX\n COPY 0 F\n JUMP RIGHTNEXTREP\n \n MARK RIGHTNOMATCH\n SEEK -9999\n SEEK GY\n TEST F = 0\n FJMP RIGHTNEXTREP\n \n ; MOVE RIGHT\n SEEK -9999\n SEEK GY\n COPY X F\n SEEK -9999\n SEEK GX\n COPY 0 F\n ; INCR GX, KEEP GOING\n ADDI GX 1 GX\n \n MODI GX 4 T\n TEST T = 3\n FJMP RIGHTGYLOOP\n \n MARK RIGHTNEXTREP\n TEST CO < 11\n TJMP RIGHTLOOP\n \n JUMP END\n \n MARK LEFTSTART\n LINK -1\n GRAB 400\n \n COPY -1 CO\n \n MARK LEFTLOOP\n ADDI 1 CO CO\n \n ; MAP CO TO GX GY\n MODI CO 4 X\n MULI 4 X X\n ADDI 1 X X\n DIVI CO 4 GX\n ADDI X GX GX\n \n SEEK -9999\n SEEK GX\n COPY F X\n TEST X = 0\n TJMP LEFTNEXTREP\n COPY GX GY\n \n ; LOOP FOR EACH GY GOING\n ; LEFT UNTIL WE HIT ONE\n MARK LEFTGYLOOP\n ADDI GY -1 GY\n \n SEEK -9999\n SEEK GY\n TEST X = F\n FJMP LEFTNOMATCH\n \n ; MERGE LEFT\n SEEK -9999\n SEEK GY\n ADDI X 1 F\n SEEK -9999\n SEEK GX\n COPY 0 F\n JUMP LEFTNEXTREP\n \n MARK LEFTNOMATCH\n SEEK -9999\n SEEK GY\n TEST F = 0\n FJMP LEFTNEXTREP\n \n ; MOVE LEFT\n SEEK -9999\n SEEK GY\n COPY X F\n SEEK -9999\n SEEK GX\n COPY 0 F\n ; INCR GX, KEEP GOING\n ADDI GX -1 GX\n \n MODI GX 4 T\n TEST T = 0\n FJMP LEFTGYLOOP\n \n MARK LEFTNEXTREP\n TEST CO < 11\n TJMP LEFTLOOP\n \n JUMP END\n \n MARK DOWNSTART\n LINK -1\n GRAB 400\n \n COPY 12 CO\n \n MARK DOWNLOOP\n SUBI CO 1 CO\n COPY CO GX\n SEEK -9999\n SEEK GX\n COPY F X\n TEST X = 0\n TJMP DOWNNEXTREP\n COPY GX GY\n \n ; LOOP FOR EACH GY GOING\n ; DOWN UNTIL WE HIT ONE\n MARK DOWNGYLOOP\n ADDI GY 4 GY\n \n SEEK -9999\n SEEK GY\n TEST X = F\n FJMP DOWNNOMATCH\n \n ; MERGE DOWN\n SEEK -9999\n SEEK GY\n ADDI X 1 F\n SEEK -9999\n SEEK GX\n COPY 0 F\n JUMP DOWNNEXTREP\n \n MARK DOWNNOMATCH\n SEEK -9999\n SEEK GY\n TEST F = 0\n FJMP DOWNNEXTREP\n \n ; MOVE DOWN\n SEEK -9999\n SEEK GY\n COPY X F\n SEEK -9999\n SEEK GX\n COPY 0 F\n ; INCR GX, KEEP GOING\n ADDI GX 4 GX\n \n TEST GY < 12\n TJMP DOWNGYLOOP\n \n MARK DOWNNEXTREP\n TEST CO > 0\n TJMP DOWNLOOP\n JUMP END\n \n MARK UPSTART\n LINK -1\n GRAB 400\n \n COPY 3 CO\n \n MARK UPLOOP\n ADDI 1 CO CO\n COPY CO GX\n SEEK -9999\n SEEK GX\n COPY F X\n TEST X = 0\n TJMP UPNEXTREP\n COPY GX GY\n \n ; LOOP FOR EACH GY GOING\n ; UP UNTIL WE HIT ONE\n MARK UPGYLOOP\n SUBI GY 4 GY\n \n SEEK -9999\n SEEK GY\n TEST X = F\n FJMP UPNOMATCH\n \n ; MERGE UP\n SEEK -9999\n SEEK GY\n ADDI X 1 F\n SEEK -9999\n SEEK GX\n COPY 0 F\n JUMP UPNEXTREP\n \n MARK UPNOMATCH\n SEEK -9999\n SEEK GY\n TEST F = 0\n FJMP UPNEXTREP\n \n ; MOVE UP\n SEEK -9999\n SEEK GY\n COPY X F\n SEEK -9999\n SEEK GX\n COPY 0 F\n ; DECR GX, KEEP GOING\n SUBI GX 4 GX\n \n TEST GY > 3\n TJMP UPGYLOOP\n \n MARK UPNEXTREP\n TEST CO < 15\n TJMP UPLOOP\n \n MARK END\n \n ; CHECK FOR GAME OVER\n SEEK -9999\n MARK GAMEOVERLOOP\n TEST F = 0\n TJMP TRYRANDOM\n TEST EOF\n FJMP GAMEOVERLOOP\n HALT\n \n ; ADD A RANDOM NEW 1\n MARK TRYRANDOM\n RAND 0 15 X\n SEEK -9999\n SEEK X\n TEST F = 0\n FJMP TRYRANDOM\n SEEK -1\n COPY 1 F\n \n DROP\n COPY 0 M\n WAIT\n JUMP START\n",
         )
         .expect("cannot spawn");
+        }
 
         // TODO load and verify rom
 
@@ -120,6 +122,10 @@ impl Core for Emulator<'_> {
         }
         if handle.is_joypad_button_pressed(0, JoypadButton::Right) {
             vm.input_pressed(RedshiftButton::Right);
+        }
+
+        if handle.is_joypad_button_pressed(0, JoypadButton::Start) {
+            println!("{}", vm);
         }
 
         vm.unfreeze_waiters();

@@ -150,4 +150,22 @@ note we groovin";
             Ok(vec![Instruction::TestMrd, Instruction::Noop])
         );
     }
+
+    #[test]
+    fn test_bad_label_parse() {
+        let s = "MODE\n ; INIT STATE\n DATA 0 0 0 0 0 0 0 0\n DATA 0 0 0 0 0 0 0 0\n \n ; INIT 2 RANDOMS\n RAND 0 15 X\n \n SEEK X\n COPY 1 F\n \n MARK INITLOOP\n SEEK -9999\n RAND 0 15 X\n SEEK X\n TEST F = 0\n FJMP INITLOOP\n SEEK -1\n COPY 1 F\n \n ; RENDER BOARD STATE\n COPY 0 X\n SEEK -9999\n \n MARK RENDER\n COPY F T\n REPL SPRITE\n ADDI X 1 X\n TEST EOF\n FJMP RENDER\n COPY 0 X \n JUMP WAIT\n \n MARK SPRITE\n LINK 801\n COPY T CO\n TEST T = 0\n TJMP BLANKSPRITE\n ADDI 327 CO GP\n MARK BLANKSPRITE\n COPY CO T\n MODI X 4 CO\n MULI 25 CO T\n ADDI 5 T GX\n \n DIVI X 4 CO\n MULI 25 CO T\n ADDI 5 T GY\n \n MARK FOREVER\n WAIT\n JUMP FOREVER\n \n MARK WAIT\n DROP\n VOID M\n REPL KILLER\n @REP 17\n COPY T T\n @END\n GRAB 400\n JUMP RENDER\n \n MARK KILLER\n LINK 801\n @REP 16\n KILL\n @END\n HALT\n";
+        let parsed = parse_text(s).unwrap();
+        for i in parsed.iter() {
+            match i {
+                Instruction::Mark(ref label) => {
+                    if label == "killer" {
+                        return;
+                    }
+                }
+                _ => (),
+            }
+        }
+        println!("{:?}", parsed);
+        assert!(false, "killer mark not found");
+    }
 }

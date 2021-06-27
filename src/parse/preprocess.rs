@@ -23,7 +23,7 @@ fn strip_empty_lines(i: &str) -> String {
 
 fn expand_macros(i: &str) -> String {
     let macros =
-        Regex::new(r"(?is)@rep[[:blank:]]+(\d+)[[:blank:]]?\n(.+)[[:blank:]]?@end[[:blank:]]?\n")
+        Regex::new(r"(?is)@rep[[:blank:]]+(\d+)[[:blank:]]?\n(.+?)[[:blank:]]?@end[[:blank:]]?\n")
             .unwrap();
     let expansions = Regex::new(r"@\{(-?\d)+,(-?\d)+\}").unwrap();
 
@@ -144,5 +144,13 @@ mod tests {
             expand_macros("@rep 2\nlink @{-1,-4}\ncopy @{-5,3} x\n@end\n"),
             String::from("link -1\ncopy -5 x\nlink -5\ncopy -2 x\n"),
         );
+    }
+
+    #[test]
+    fn test_multiple_macros() {
+        assert_eq!(
+            expand_macros("@rep 2\nnoop\n@end\n@rep 2\ncopy 1 x\n@end\n"),
+            String::from("noop\nnoop\ncopy 1 x\ncopy 1 x\n"),
+        )
     }
 }
