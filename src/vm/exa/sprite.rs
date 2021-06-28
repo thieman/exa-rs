@@ -1,17 +1,24 @@
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Sprite {
     pub pixels: [bool; 100],
+    pub is_empty: bool,
 }
 
 impl Sprite {
     pub fn empty() -> Sprite {
         Sprite {
             pixels: [false; 100],
+            is_empty: true,
         }
     }
 
     pub fn from_pixels(pixels: [bool; 100]) -> Sprite {
-        Sprite { pixels }
+        let mut s = Sprite {
+            pixels,
+            is_empty: true,
+        };
+        s.update_is_empty();
+        s
     }
 
     // shorthand is [number of false pixels, number of true pixels, number of false pixels...]
@@ -31,7 +38,12 @@ impl Sprite {
             }
             value = !value;
         }
-        Sprite { pixels }
+        let mut s = Sprite {
+            pixels,
+            is_empty: true,
+        };
+        s.update_is_empty();
+        s
     }
 
     pub fn from_builtin(code: u32) -> Sprite {
@@ -139,15 +151,28 @@ impl Sprite {
     pub fn enable(&mut self, x: u32, y: u32) {
         let idx = (x + (y * 10)) as usize;
         self.pixels[idx] = true;
+        self.is_empty = false;
     }
 
     pub fn disable(&mut self, x: u32, y: u32) {
         let idx = (x + (y * 10)) as usize;
         self.pixels[idx] = false;
+        self.update_is_empty();
     }
 
     pub fn toggle(&mut self, x: u32, y: u32) {
         let idx = (x + (y * 10)) as usize;
         self.pixels[idx] = !self.pixels[idx];
+        self.update_is_empty();
+    }
+
+    pub fn update_is_empty(&mut self) {
+        for p in self.pixels.iter() {
+            if *p {
+                self.is_empty = false;
+                return;
+            }
+        }
+        self.is_empty = true;
     }
 }

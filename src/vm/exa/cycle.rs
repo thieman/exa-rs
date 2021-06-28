@@ -626,6 +626,12 @@ impl<'a> Exa<'a> {
         };
         Ok(r)
     }
+
+    pub fn reset_collision(&mut self) {
+        self.registers.ci.borrow_mut().value = 0;
+    }
+
+    pub fn update_collision(&mut self, other: &Exa) {}
 }
 
 #[cfg(test)]

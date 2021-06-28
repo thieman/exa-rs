@@ -7,7 +7,7 @@ use super::{Shared, VM};
 impl<'a> VM<'a> {
     /// Run the VM for one animation frame at 30hz. The
     /// tricky part here is that how many cycles constitutes
-    /// a frames seems to be undefined and/or dynamic.
+    /// a frame seems to be undefined and/or dynamic.
     /// From observation, it seems that the cycles per frame
     /// do decrease when more EXAs are alive, and it also
     /// seems that there may be a hardcoded cycle count
@@ -66,6 +66,24 @@ impl<'a> VM<'a> {
         }
 
         // TODO: Clear out killed EXAs from message bus send queues
+
+        // Collision detection. Quadratic for now, let's see if we can
+        // get away with it. We'll do some filtering to make it faster.
+        if self.redshift.is_some() {
+            let collision_exas: Vec<Shared<Exa>> = self
+                .exas
+                .clone()
+                .into_iter()
+                .filter(|e| !e.borrow().sprite.is_empty)
+                .collect();
+
+            for (left_idx, left_exa) in collision_exas.iter().enumerate() {
+                left_exa.borrow_mut().reset_collision();
+                for right_exa in collision_exas[left_idx + 1..].iter() {
+                    left_exa.borrow_mut().update_collision(&right_exa.borrow());
+                }
+            }
+        }
 
         // Run message buses
         self.bus.borrow_mut().run_cycle();
