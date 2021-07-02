@@ -631,7 +631,52 @@ impl<'a> Exa<'a> {
         self.registers.ci.borrow_mut().value = 0;
     }
 
-    pub fn update_collision(&mut self, other: &Exa) {}
+    pub fn update_collision(&mut self, other: &Exa) {
+        let (self_x, self_y) = (
+            self.registers.gx.borrow().value,
+            self.registers.gy.borrow().value,
+        );
+        let (other_x, other_y) = (
+            other.registers.gx.borrow().value,
+            other.registers.gy.borrow().value,
+        );
+
+        // Quick bounds check and bail
+        let (x_diff, y_diff) = (self_x - other_x, self_y - other_y);
+        if x_diff.abs() >= 10 || y_diff.abs() >= 10 {
+            return;
+        }
+
+        for (idx, pixel) in self.sprite.pixels.iter().enumerate() {
+            if !*pixel {
+                continue;
+            }
+            let (row, col) = (idx as i32 / 10, idx as i32 % 10);
+            let (other_row, other_col) = (row + y_diff, col + x_diff);
+            if other_row < 0 || other_row > 9 || other_col < 0 || other_col > 9 {
+                continue;
+            }
+
+            let other_idx = (other_row * 10 + other_col) as usize;
+            let other_pixel = other.sprite.pixels[other_idx];
+            if other_pixel {
+                let mut self_ci = self.registers.ci.borrow_mut();
+                let mut other_ci = other.registers.ci.borrow_mut();
+                let self_co = self.registers.co.borrow().value;
+                let other_co = other.registers.co.borrow().value;
+
+                if self_co > other_ci.value {
+                    other_ci.value = self_co;
+                }
+
+                if other_co > self_ci.value {
+                    self_ci.value = other_co;
+                }
+
+                return;
+            }
+        }
+    }
 }
 
 #[cfg(test)]

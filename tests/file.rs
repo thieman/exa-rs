@@ -166,7 +166,7 @@ fn file_drop_resets_file_pointer() {
 #[test]
 fn grabbing_file_frees_up_slot_in_host() {
     let mut bench = TestBench::basic_vm();
-    let e1 = bench.exa("make\n drop\n grab 400\n noop\n");
+    let _e1 = bench.exa("make\n drop\n grab 400\n noop\n");
 
     bench.assert_host_occupied_slots("start", 2);
     bench.run_cycle();
