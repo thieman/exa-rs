@@ -4,6 +4,7 @@ use std::cell::RefCell;
 use std::fmt;
 use std::rc::Rc;
 
+use exa::image::load_image;
 use exa::vm::error::ExaError;
 use exa::vm::exa::sprite::Sprite;
 use exa::vm::exa::{Exa, Mode};
@@ -52,6 +53,16 @@ impl<'a> TestBench<'a> {
 
     pub fn redshift_vm() -> TestBench<'a> {
         let vm = VM::new_redshift();
+
+        TestBench {
+            vm: Rc::new(RefCell::new(vm)),
+            spawned: 0,
+            redshift: true,
+        }
+    }
+
+    pub fn redshift_vm_from_image(path: &'a str) -> TestBench<'a> {
+        let vm = load_image(path).expect("failed to load image");
 
         TestBench {
             vm: Rc::new(RefCell::new(vm)),
@@ -135,6 +146,14 @@ impl<'a> TestBench<'a> {
     pub fn assert_exa_sprite(&self, exa: &Shared<Exa<'a>>, shorthand: Vec<u32>) {
         let test_sprite = Sprite::from_shorthand(shorthand);
         assert_eq!(exa.borrow().sprite, test_sprite);
+    }
+
+    pub fn assert_exa_global_mode(&self, exa: &Shared<Exa<'a>>) {
+        assert_eq!(exa.borrow().mode, Mode::Global);
+    }
+
+    pub fn assert_exa_local_mode(&self, exa: &Shared<Exa<'a>>) {
+        assert_eq!(exa.borrow().mode, Mode::Local);
     }
 
     pub fn assert_host_file(&self, hostname: &str, file_id: i32) {

@@ -3,6 +3,7 @@ use super::{Host, Permissions, Shared, VM};
 
 #[derive(Debug)]
 pub struct RedshiftEnvironment {
+    pub game_name: String,
     pady: Shared<Register>,
     padx: Shared<Register>,
     padb: Shared<Register>,
@@ -87,6 +88,7 @@ impl<'a> VM<'a> {
         vm.add_link(-1, aux2.clone(), core.clone());
 
         vm.redshift = Some(RedshiftEnvironment {
+            game_name: "".to_string(),
             padx: padx.clone(),
             pady: pady.clone(),
             padb: padb.clone(),

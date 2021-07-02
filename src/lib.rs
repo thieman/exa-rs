@@ -1,5 +1,6 @@
 mod libretro;
 
+pub mod image;
 pub mod parse;
 pub mod vm;
 
