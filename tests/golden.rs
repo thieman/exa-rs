@@ -15,7 +15,7 @@ use common::*;
 
 #[test]
 fn test_golden() {
-    let mut bench = TestBench::redshift_vm_from_image("./tests/golden.png");
+    let mut bench = TestBench::redshift_vm_from_image("./tests/golden.png".to_string());
 
     let e1 = bench.get_exa("AB");
     let e2 = bench.get_exa("CD");

@@ -54,7 +54,7 @@ impl ImageData {
     }
 }
 
-fn png_to_image_data(path: &str) -> Result<ImageData, Box<dyn Error>> {
+fn png_to_image_data(path: String) -> Result<ImageData, Box<dyn Error>> {
     let img = ImageReader::open(path)?.decode()?;
 
     let mut stream: Vec<u8> = vec![];
@@ -92,7 +92,7 @@ fn png_to_image_data(path: &str) -> Result<ImageData, Box<dyn Error>> {
 
 /// Load a Redshift image from the specified file and return
 /// an initialized Redshift VM implementing the program.
-pub fn load_image<'a>(path: &str) -> Result<VM, Box<dyn Error>> {
+pub fn load_image<'a>(path: String) -> Result<VM<'a>, Box<dyn Error>> {
     let mut image_data = png_to_image_data(path)?;
 
     let mut vm = VM::new_redshift();

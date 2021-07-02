@@ -61,7 +61,7 @@ impl<'a> TestBench<'a> {
         }
     }
 
-    pub fn redshift_vm_from_image(path: &'a str) -> TestBench<'a> {
+    pub fn redshift_vm_from_image(path: String) -> TestBench<'a> {
         let vm = load_image(path).expect("failed to load image");
 
         TestBench {
