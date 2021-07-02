@@ -70,6 +70,9 @@ impl<'a> VM<'a> {
         // Collision detection. Quadratic for now, let's see if we can
         // get away with it. We'll do some filtering to make it faster.
         if self.redshift.is_some() {
+            for exa in self.exas.clone().into_iter() {
+                exa.borrow_mut().reset_collision();
+            }
             let collision_exas: Vec<Shared<Exa>> = self
                 .exas
                 .clone()
@@ -78,7 +81,6 @@ impl<'a> VM<'a> {
                 .collect();
 
             for (left_idx, left_exa) in collision_exas.iter().enumerate() {
-                left_exa.borrow_mut().reset_collision();
                 for right_exa in collision_exas[left_idx + 1..].iter() {
                     left_exa.borrow_mut().update_collision(&right_exa.borrow());
                 }

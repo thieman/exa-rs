@@ -54,7 +54,7 @@ impl Registers {
             gy: Register::new_shared(Permissions::ReadWrite, 0),
             gz: Register::new_shared(Permissions::ReadWrite, 0),
             gp: Register::new_shared(Permissions::WriteOnly, 0),
-            ci: Register::new_shared(Permissions::ReadOnly, 0),
+            ci: Register::new_shared(Permissions::ReadOnly, -9999),
             co: Register::new_shared(Permissions::ReadWrite, 0),
         }
     }
