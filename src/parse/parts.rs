@@ -16,8 +16,8 @@ fn is_digit_or_sign(c: char) -> bool {
     c.is_digit(10) || c == '+' || c == '-'
 }
 
-fn is_alpha_or_hash(c: char) -> bool {
-    c.is_ascii_alphabetic() || c == '#'
+fn is_alphanum_or_hash(c: char) -> bool {
+    c.is_ascii_alphabetic() || c.is_numeric() || c == '#'
 }
 
 fn to_i32(i: &str) -> Result<i32, std::num::ParseIntError> {
@@ -29,7 +29,7 @@ fn parse_literal(i: &str) -> IResult<&str, i32> {
 }
 
 fn parse_register(i: &str) -> IResult<&str, String> {
-    map(take_while(is_alpha_or_hash), |s: &str| {
+    map(take_while(is_alphanum_or_hash), |s: &str| {
         s.to_ascii_lowercase()
     })(i)
 }

@@ -17,6 +17,7 @@ use file::File;
 use redshift::RedshiftEnvironment;
 use register::Register;
 
+pub mod audio;
 pub mod bus;
 pub mod cycle;
 pub mod error;
@@ -153,6 +154,8 @@ pub struct VM<'a> {
 
     framebuffer: [bool; 120 * 100],
 
+    audio_buffer: [i16; (44100 / 30) * 2],
+
     pub redshift: Option<RedshiftEnvironment>,
 }
 
@@ -166,6 +169,7 @@ impl<'a> VM<'a> {
             bus: Rc::new(RefCell::new(MessageBus::new())),
             file_counter: Rc::new(AtomicI32::new(400)),
             framebuffer: [false; 120 * 100],
+            audio_buffer: [0; (44100 / 30) * 2],
             redshift: None,
         }
     }

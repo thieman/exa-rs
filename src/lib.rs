@@ -7,6 +7,7 @@ pub mod vm;
 use libretro::*;
 
 use crate::image::load_image;
+use vm::exa::Exa;
 use vm::redshift::RedshiftButton;
 use vm::VM;
 
@@ -60,11 +61,26 @@ impl Core for Emulator<'_> {
         self.rom_path = Some(path.clone());
         self.game_data = Some(game_data);
 
-        match load_image(path) {
-            Ok(vm) => self.vm = Some(vm),
-            Err(_) => {
-                self.rom_path = None;
-                return LoadGameResult::Failed(self.game_data.take().unwrap());
+        self.vm = Some(VM::new_redshift());
+        let host1 = self.vm.as_ref().unwrap().hosts.get("core").unwrap().clone();
+
+        Exa::spawn(
+            &mut self.vm.as_mut().unwrap(),
+            host1.clone(),
+            "x0".to_string(),
+            true,
+            // "link 801\n copy 99 x\n mark a\n copy x #sqr0\n @rep 20\n wait\n @end\n subi x 1 x\n jump a\n",
+            "link 801\n copy 80 #sqr0\n mark a\n wait\n jump a\n",
+        )
+        .expect("cannot spawn");
+
+        if false {
+            match load_image(path) {
+                Ok(vm) => self.vm = Some(vm),
+                Err(_) => {
+                    self.rom_path = None;
+                    return LoadGameResult::Failed(self.game_data.take().unwrap());
+                }
             }
         }
 
@@ -112,12 +128,12 @@ impl Core for Emulator<'_> {
         }
 
         if handle.is_joypad_button_pressed(0, JoypadButton::Select) {
-            println!("\x1B[2J\x1B[1;1H");
+            println!("{}", &vm);
         }
 
         if handle.is_joypad_button_pressed(0, JoypadButton::X) {
             vm.run_cycle();
-            println!("{}", vm);
+            println!("{}", &vm);
         }
 
         vm.run_for_frame();
@@ -125,8 +141,7 @@ impl Core for Emulator<'_> {
         Emulator::update_video_frame(&mut self.video_frame, vm.render());
         handle.upload_video_frame(&self.video_frame);
 
-        let audio = [0; (44100 / 30) * 2];
-        handle.upload_audio_frame(&audio);
+        handle.upload_audio_frame(vm.audio_frame());
     }
 
     fn on_reset(&mut self) {

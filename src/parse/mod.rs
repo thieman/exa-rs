@@ -168,4 +168,20 @@ note we groovin";
         println!("{:?}", parsed);
         assert!(false, "killer mark not found");
     }
+
+    #[test]
+    fn test_hardware_reg() {
+        let s = "link 801\n copy 60 #sqr0\n mark a\n wait\n jump a\n";
+        let parsed = parse_text(s).unwrap();
+        assert_eq!(
+            parsed,
+            vec![
+                Instruction::Link(Target::Literal(801)),
+                Instruction::Copy(Target::Literal(60), Target::Register("#sqr0".into())),
+                Instruction::Mark("a".into()),
+                Instruction::Wait,
+                Instruction::Jump("a".into()),
+            ]
+        )
+    }
 }

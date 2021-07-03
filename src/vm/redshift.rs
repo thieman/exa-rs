@@ -1,17 +1,20 @@
+use super::audio::SquareWave;
 use super::register::Register;
 use super::{Host, Permissions, Shared, VM};
 
 #[derive(Debug)]
 pub struct RedshiftEnvironment {
     pub game_name: String,
-    pady: Shared<Register>,
-    padx: Shared<Register>,
-    padb: Shared<Register>,
-    en3d: Shared<Register>,
-    sqr0: Shared<Register>,
-    sqr1: Shared<Register>,
-    tri0: Shared<Register>,
-    nse0: Shared<Register>,
+    pub pady: Shared<Register>,
+    pub padx: Shared<Register>,
+    pub padb: Shared<Register>,
+    pub en3d: Shared<Register>,
+    pub sqr0: Shared<Register>,
+    pub sqr1: Shared<Register>,
+    pub tri0: Shared<Register>,
+    pub nse0: Shared<Register>,
+
+    pub sqr0_wave: SquareWave,
 }
 
 #[derive(Debug)]
@@ -97,6 +100,8 @@ impl<'a> VM<'a> {
             sqr1: sqr1.clone(),
             tri0: tri0.clone(),
             nse0: nse0.clone(),
+
+            sqr0_wave: SquareWave::default(),
         });
 
         vm

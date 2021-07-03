@@ -83,11 +83,14 @@ fn png_to_image_data(path: String) -> Result<ImageData, Box<dyn Error>> {
 
     let mut checksum_got = fletcher::Fletcher16::new();
     checksum_got.update(compressed);
-    assert_eq!(checksum_expected, checksum_got.value() as u32);
+    if checksum_expected != checksum_got.value() as u32 {
+        return Err("failed checksum".into());
+    }
 
-    let data = decompress_to_vec_zlib(compressed).expect("failed to decompress image data");
-
-    Ok(ImageData::new(data))
+    match decompress_to_vec_zlib(compressed) {
+        Ok(data) => Ok(ImageData::new(data)),
+        Err(_) => Err("failed to decompress zlib".into()),
+    }
 }
 
 /// Load a Redshift image from the specified file and return
