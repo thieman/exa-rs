@@ -1,5 +1,7 @@
 mod libretro;
 
+use std::time::{SystemTime, UNIX_EPOCH};
+
 pub mod image;
 pub mod parse;
 pub mod vm;
@@ -16,6 +18,7 @@ struct Emulator<'a> {
     #[allow(dead_code)]
     rom_path: Option<String>,
     game_data: Option<GameData>,
+    frame: u64,
 
     vm: Option<VM<'a>>,
     video_frame: [u8; 120 * 100 * 2],
@@ -32,6 +35,7 @@ impl<'a> Emulator<'_> {
         Emulator {
             rom_path: None,
             game_data: None,
+            frame: 0,
             vm: None,
             video_frame: [0; 120 * 100 * 2],
         }
@@ -70,7 +74,7 @@ impl Core for Emulator<'_> {
             "x0".to_string(),
             true,
             // "link 801\n copy 99 x\n mark a\n copy x #sqr0\n @rep 20\n wait\n @end\n subi x 1 x\n jump a\n",
-            "link 801\n copy 80 #sqr0\n mark a\n wait\n jump a\n",
+            "link 801\n copy 60 #sqr0\n mark a\n wait\n jump a\n",
         )
         .expect("cannot spawn");
 
@@ -99,6 +103,11 @@ impl Core for Emulator<'_> {
 
     fn on_run(&mut self, handle: &mut RuntimeHandle) {
         let vm = self.vm.as_mut().unwrap();
+
+        let time = SystemTime::now();
+        let since = time.duration_since(UNIX_EPOCH).expect("nope");
+        println!("{} {:?}", self.frame, since);
+        self.frame += 1;
 
         vm.reset_inputs();
         vm.unfreeze_waiters();
@@ -141,7 +150,7 @@ impl Core for Emulator<'_> {
         Emulator::update_video_frame(&mut self.video_frame, vm.render());
         handle.upload_video_frame(&self.video_frame);
 
-        handle.upload_audio_frame(vm.audio_frame());
+        handle.upload_audio_frame(&vm.audio_frame().clone());
     }
 
     fn on_reset(&mut self) {

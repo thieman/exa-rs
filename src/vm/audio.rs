@@ -1,5 +1,9 @@
 use std::f64;
 
+use synthrs::filter::*;
+use synthrs::synthesizer::{make_samples, quantize_samples};
+use synthrs::wave::sine_wave;
+
 use super::VM;
 
 pub trait AudioSample {
@@ -8,17 +12,17 @@ pub trait AudioSample {
     fn set_frequency(&mut self, value: i32);
 
     /// Fill audio_buffer for next frame and return borrow of it
-    fn sample(&mut self) -> &[i16; 44100 / 30];
+    fn sample(&mut self) -> &[f64; 44100 / 30];
 }
 
 pub trait WaveForm: Default + AudioSample {}
 
 #[derive(Debug)]
 pub struct SquareWave {
-    samples: [i16; 44100],
+    samples: [f64; 44100],
     pos: f64,
-    audio_buffer: [i16; 44100 / 30],
-    frequency: f64,
+    audio_buffer: [f64; 44100 / 30],
+    pub frequency: f64,
 }
 
 impl AudioSample for SquareWave {
@@ -27,7 +31,7 @@ impl AudioSample for SquareWave {
         self.frequency = f64::powf(2.0, steps as f64 / 12.0) * 261.63;
     }
 
-    fn sample(&mut self) -> &[i16; 44100 / 30] {
+    fn sample(&mut self) -> &[f64; 44100 / 30] {
         for idx in 0..44100 / 30 {
             self.pos += self.frequency;
             if self.pos > 44100.0 {
@@ -37,22 +41,45 @@ impl AudioSample for SquareWave {
             let sample_idx = self.pos.floor() as usize;
             self.audio_buffer[idx] = self.samples[sample_idx];
         }
+
+        // antialiasing pass, this is necessary since the frequency
+        // might not be divisible by the sampling rate
+        // let mut idx = 1;
+        // let mut current = i16::MAX;
+        // while idx < (44100 / 30) - 1 {
+        //     if self.audio_buffer[idx] != current {
+        //         current = self.audio_buffer[idx];
+        //         if current == i16::MAX {
+        //             self.audio_buffer[idx - 1] = -16383;
+        //             self.audio_buffer[idx] = 0;
+        //             self.audio_buffer[idx + 1] = 16383;
+        //             idx += 1;
+        //         } else if current == i16::MIN {
+        //             self.audio_buffer[idx - 1] = 16383;
+        //             self.audio_buffer[idx] = 0;
+        //             self.audio_buffer[idx + 1] = -16383;
+        //             idx += 1;
+        //         }
+        //     }
+        //     idx += 1;
+        // }
         &self.audio_buffer
     }
 }
 
 impl Default for SquareWave {
     fn default() -> Self {
-        let mut samples = [0; 44100];
+        let mut samples = [0.0; 44100];
         for idx in 0..44100 {
             let t = (2.0 * f64::consts::PI * idx as f64 / 44100.0).sin();
-            samples[idx] = if t > 0.0 { i16::MAX } else { i16::MIN };
+            // samples[idx] = if t > 0.0 { i16::MAX } else { i16::MIN };
+            samples[idx] = t;
         }
 
         SquareWave {
             samples,
             pos: 0.0,
-            audio_buffer: [0; 44100 / 30],
+            audio_buffer: [0.0; 44100 / 30],
             frequency: 0.0,
         }
     }
@@ -79,7 +106,19 @@ impl<'a> VM<'a> {
         let sqr0_wave = &mut self.redshift.as_mut().unwrap().sqr0_wave;
         sqr0_wave.set_frequency(sqr0_value);
 
-        for (idx, value) in sqr0_wave.sample().iter().enumerate() {
+        let high_pass = bandpass_filter(
+            cutoff_from_frequency(90.0, 44100),
+            cutoff_from_frequency(14000.0, 44100),
+            0.01,
+        );
+        // let samples = quantize_samples::<i16>(&convolve(&high_pass, sqr0_wave.sample()));
+        let samples = quantize_samples::<i16>(sqr0_wave.sample());
+        // println!("{}", samples.len());
+
+        for (idx, value) in samples.iter().enumerate() {
+            if idx * 2 >= 2940 {
+                break;
+            }
             self.audio_buffer[idx * 2] = *value;
             self.audio_buffer[idx * 2 + 1] = *value;
         }

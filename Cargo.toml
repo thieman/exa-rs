@@ -29,12 +29,16 @@ image = "0.23.14"
 miniz_oxide = "0.4.4"
 fletcher = "0.1.0"
 
+[dependencies.synthrs]
+git = "https://github.com/gyng/synthrs"
+rev = "77e062f3e40304dd2c3611d70ece6a0e4eaf9750"
+
 [dev-dependencies]
 criterion = "0.3"
 
 [profile.release]
 opt-level = 3
 rpath = false
-lto = true
+# lto = true
 debug-assertions = false
 codegen-units = 1
