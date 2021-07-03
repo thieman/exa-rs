@@ -1,4 +1,6 @@
-use super::audio::SquareWave;
+use std::cell::RefCell;
+
+use super::audio::{Noise, SquareWave, TriangleWave};
 use super::register::Register;
 use super::{Host, Permissions, Shared, VM};
 
@@ -14,7 +16,10 @@ pub struct RedshiftEnvironment {
     pub tri0: Shared<Register>,
     pub nse0: Shared<Register>,
 
-    pub sqr0_wave: SquareWave,
+    pub sqr0_wave: RefCell<SquareWave>,
+    pub sqr1_wave: RefCell<SquareWave>,
+    pub tri0_wave: RefCell<TriangleWave>,
+    pub nse0_wave: RefCell<Noise>,
 }
 
 #[derive(Debug)]
@@ -101,7 +106,10 @@ impl<'a> VM<'a> {
             tri0: tri0.clone(),
             nse0: nse0.clone(),
 
-            sqr0_wave: SquareWave::default(),
+            sqr0_wave: RefCell::new(SquareWave::default()),
+            sqr1_wave: RefCell::new(SquareWave::default()),
+            tri0_wave: RefCell::new(TriangleWave::default()),
+            nse0_wave: RefCell::new(Noise::default()),
         });
 
         vm

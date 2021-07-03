@@ -71,7 +71,7 @@ impl Core for Emulator<'_> {
             host1.clone(),
             "x0".to_string(),
             true,
-            "link 801\n copy 99 x\n mark a\n copy x #sqr0\n @rep 5\n wait\n @end\n subi x 1 x\n jump a\n",
+            "link 801\n copy 99 x\n mark a\n copy x #nse0\n @rep 5\n wait\n @end\n subi x 1 x\n jump a\n",
             // "link 801\n copy 60 #sqr0\n mark a\n wait\n jump a\n",
         )
         .expect("cannot spawn");
