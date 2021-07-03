@@ -17,6 +17,7 @@ struct Emulator<'a> {
     rom_path: Option<String>,
     game_data: Option<GameData>,
 
+    pub frame_counter: u64,
     vm: Option<VM<'a>>,
     video_frame: [u8; 120 * 100 * 2],
 }
@@ -32,6 +33,7 @@ impl<'a> Emulator<'_> {
         Emulator {
             rom_path: None,
             game_data: None,
+            frame_counter: 0,
             vm: None,
             video_frame: [0; 120 * 100 * 2],
         }
@@ -69,8 +71,8 @@ impl Core for Emulator<'_> {
             host1.clone(),
             "x0".to_string(),
             true,
-            // "link 801\n copy 99 x\n mark a\n copy x #sqr0\n @rep 20\n wait\n @end\n subi x 1 x\n jump a\n",
-            "link 801\n copy 80 #sqr0\n mark a\n wait\n jump a\n",
+            "link 801\n copy 99 x\n mark a\n copy x #sqr0\n @rep 5\n wait\n @end\n subi x 1 x\n jump a\n",
+            // "link 801\n copy 60 #sqr0\n mark a\n wait\n jump a\n",
         )
         .expect("cannot spawn");
 
@@ -85,7 +87,7 @@ impl Core for Emulator<'_> {
         }
 
         let av_info = AudioVideoInfo::new()
-            .video(120, 100, 30.0, PixelFormat::RGB565)
+            .video(120, 100, 60.0, PixelFormat::RGB565)
             .audio(44100.0)
             .region(Region::NTSC);
         LoadGameResult::Success(av_info)
@@ -98,10 +100,15 @@ impl Core for Emulator<'_> {
     }
 
     fn on_run(&mut self, handle: &mut RuntimeHandle) {
+        self.frame_counter += 1;
+
         let vm = self.vm.as_mut().unwrap();
 
-        vm.reset_inputs();
-        vm.unfreeze_waiters();
+        if self.frame_counter % 2 == 0 {
+            vm.reset_inputs();
+            vm.unfreeze_waiters();
+        }
+
         if handle.is_joypad_button_pressed(0, JoypadButton::Y) {
             vm.input_pressed(RedshiftButton::X);
         }
