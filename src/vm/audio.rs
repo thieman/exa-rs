@@ -1,6 +1,8 @@
 use std::f64;
 
 use fastrand;
+use synthrs::filter::*;
+use synthrs::synthesizer::quantize_samples;
 
 use super::VM;
 
@@ -10,26 +12,26 @@ pub trait AudioSample {
     fn set_frequency(&mut self, value: i32);
 
     /// Fill audio_buffer for next frame and return borrow of it
-    fn sample(&mut self) -> &[i16; 44100 / 60];
+    fn sample(&mut self) -> &[f64; 44100 / 60];
 }
 
 pub trait WaveForm: Default + AudioSample {}
 
 #[derive(Debug)]
 pub struct SquareWave {
-    samples: [i16; 44100],
+    samples: Vec<f64>,
     pos: f64,
-    audio_buffer: [i16; 44100 / 60],
-    frequency: f64,
+    audio_buffer: [f64; 44100 / 60],
+    pub frequency: f64,
 }
 
 impl AudioSample for SquareWave {
     fn set_frequency(&mut self, value: i32) {
         let steps = value as f64 - 60.0;
-        self.frequency = f64::powf(2.0, steps as f64 / 12.0) * 261.63;
+        self.frequency = f64::powf(2.0, steps / 12.0) * 261.63;
     }
 
-    fn sample(&mut self) -> &[i16; 44100 / 60] {
+    fn sample(&mut self) -> &[f64; 44100 / 60] {
         for idx in 0..44100 / 60 {
             self.pos += self.frequency;
             if self.pos > 44100.0 {
@@ -45,16 +47,16 @@ impl AudioSample for SquareWave {
 
 impl Default for SquareWave {
     fn default() -> Self {
-        let mut samples = [0; 44100];
+        let mut samples = vec![0.0; 44100];
         for idx in 0..44100 {
             let t = (2.0 * f64::consts::PI * idx as f64 / 44100.0).sin();
-            samples[idx] = if t > 0.0 { i16::MAX } else { i16::MIN };
+            samples[idx] = if t > 0.0 { 1.0 } else { -1.0 };
         }
 
         SquareWave {
             samples,
             pos: 0.0,
-            audio_buffer: [0; 44100 / 60],
+            audio_buffer: [0.0; 44100 / 60],
             frequency: 0.0,
         }
     }
@@ -62,19 +64,19 @@ impl Default for SquareWave {
 
 #[derive(Debug)]
 pub struct TriangleWave {
-    samples: [i16; 44100],
+    samples: Vec<f64>,
     pos: f64,
-    audio_buffer: [i16; 44100 / 60],
+    audio_buffer: [f64; 44100 / 60],
     frequency: f64,
 }
 
 impl AudioSample for TriangleWave {
     fn set_frequency(&mut self, value: i32) {
         let steps = value as f64 - 60.0;
-        self.frequency = f64::powf(2.0, steps as f64 / 12.0) * 261.63;
+        self.frequency = f64::powf(2.0, steps / 12.0) * 261.63;
     }
 
-    fn sample(&mut self) -> &[i16; 44100 / 60] {
+    fn sample(&mut self) -> &[f64; 44100 / 60] {
         for idx in 0..44100 / 60 {
             self.pos += self.frequency;
             if self.pos > 44100.0 {
@@ -90,17 +92,17 @@ impl AudioSample for TriangleWave {
 
 impl Default for TriangleWave {
     fn default() -> Self {
-        let mut samples = [0; 44100];
+        let mut samples = vec![0.0; 44100];
         for idx in 0..44100 {
             let t = (2.0 / f64::consts::PI)
                 * (2.0 * f64::consts::PI * idx as f64 / 44100.0).sin().asin();
-            samples[idx] = (t * i16::MAX as f64) as i16;
+            samples[idx] = t;
         }
 
         TriangleWave {
             samples,
             pos: 0.0,
-            audio_buffer: [0; 44100 / 60],
+            audio_buffer: [0.0; 44100 / 60],
             frequency: 0.0,
         }
     }
@@ -108,37 +110,27 @@ impl Default for TriangleWave {
 
 #[derive(Debug)]
 pub struct Noise {
-    samples: [i16; 44100],
+    samples: Vec<f64>,
     pos: f64,
-    audio_buffer: [i16; 44100 / 60],
+    audio_buffer: [f64; 44100 / 60],
     frequency: f64,
 }
 
 impl AudioSample for Noise {
     fn set_frequency(&mut self, value: i32) {
         let steps = value as f64 - 60.0;
-        self.frequency = f64::powf(2.0, steps as f64 / 12.0) * 261.63;
+        self.frequency = f64::powf(2.0, steps / 12.0) * 261.63;
     }
 
-    fn sample(&mut self) -> &[i16; 44100 / 60] {
-        let (mut last, mut steps) = (0, 0);
+    fn sample(&mut self) -> &[f64; 44100 / 60] {
         for idx in 0..44100 / 60 {
             self.pos += self.frequency;
             if self.pos > 44100.0 {
                 self.pos -= 44100.0;
             }
 
-            if steps == 20 {
-                steps = 0;
-            }
-
-            if steps == 0 {
-                let sample_idx = self.pos.floor() as usize;
-                last = self.samples[sample_idx];
-            }
-
-            steps += 1;
-            self.audio_buffer[idx] = last;
+            let sample_idx = self.pos.floor() as usize;
+            self.audio_buffer[idx] = self.samples[sample_idx];
         }
         &self.audio_buffer
     }
@@ -146,19 +138,16 @@ impl AudioSample for Noise {
 
 impl Default for Noise {
     fn default() -> Self {
-        let mut samples = [0; 44100];
+        let mut samples = vec![0.0; 44100];
         for idx in 0..44100 {
-            let mut value = fastrand::i16(0..20000);
-            if idx > 44100 / 2 {
-                value *= -1;
-            }
+            let value = (fastrand::f64() - 0.5) * 2.0;
             samples[idx] = value;
         }
 
         Noise {
             samples,
             pos: 0.0,
-            audio_buffer: [0; 44100 / 60],
+            audio_buffer: [0.0; 44100 / 60],
             frequency: 0.0,
         }
     }
@@ -200,8 +189,14 @@ impl<'a> VM<'a> {
             // waves.push(tri0_wave.sample());
         }
 
+        let bandpass = bandpass_filter(
+            cutoff_from_frequency(nse0_wave.frequency * 0.95, 44100),
+            cutoff_from_frequency(nse0_wave.frequency * 1.05, 44100),
+            0.01,
+        );
+        let nse0_i16 = quantize_samples::<i16>(&convolve(&bandpass, nse0_wave.sample()));
         if nse0_value > 0 {
-            waves.push(nse0_wave.sample());
+            waves.push(&nse0_i16);
         }
 
         if waves.len() == 0 {
