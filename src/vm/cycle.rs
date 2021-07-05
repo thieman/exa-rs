@@ -18,11 +18,11 @@ impl<'a> VM<'a> {
     pub fn run_for_frame(&mut self) {
         let cycles = match self.exas.len() {
             0 => 0,
-            1 => 20000,
-            2 => 15000,
-            3..=5 => 10000,
+            1..=5 => 10000,
             6..=10 => 5000,
-            _ => 2500,
+            11..=15 => 2000,
+            16..=20 => 1000,
+            _ => 500,
         };
         self.run_cycles(cycles);
     }
