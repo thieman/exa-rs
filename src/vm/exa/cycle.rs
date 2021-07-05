@@ -62,6 +62,11 @@ impl<'a> Exa<'a> {
         // Reset result struct to pass up to VM
         self.result = CycleResult::new();
 
+        if self.instructions.len() == 0 {
+            self.error = Some(ExaError::Fatal("out of instructions").into());
+            return &self.result;
+        }
+
         let result = match &self.instructions[self.pc].clone() {
             Instruction::Link(ref dest) => self.link(dest),
             Instruction::Copy(ref src, ref dest) => self.copy(src, dest),

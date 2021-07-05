@@ -291,6 +291,9 @@ impl<'a> Exa<'a> {
     }
 
     pub fn will_kill_this_cycle(&self) -> bool {
+        if self.instructions.len() == 0 {
+            return false;
+        }
         match &self.instructions[self.pc] {
             Instruction::Kill => true,
             _ => false,

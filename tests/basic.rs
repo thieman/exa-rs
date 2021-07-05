@@ -28,3 +28,12 @@ fn test_out_of_instructions() {
     bench.run_cycle();
     bench.assert_dead(&e);
 }
+
+#[test]
+fn test_empty_exa() {
+    let mut bench = TestBench::basic_vm();
+    let e = bench.exa("\n");
+
+    bench.run_cycle();
+    bench.assert_fatal_error(&e);
+}

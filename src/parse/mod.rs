@@ -7,12 +7,12 @@ use super::vm::instruction::{Instruction, Target};
 use parts::parse_line;
 use preprocess::preprocess_text;
 
-use nom::multi::many1;
+use nom::multi::many0;
 
 pub fn parse_text(i: &str) -> Result<Vec<Instruction>, String> {
     let text = preprocess_text(i);
 
-    let parsed = many1(parse_line)(&text);
+    let parsed = many0(parse_line)(&text);
     let insts = match parsed {
         Ok(p) => p.1,
         Err(e) => return Err(e.to_string()),
@@ -73,6 +73,11 @@ fn validate_targets(ts: &[&Target]) -> Result<(), String> {
 mod tests {
     use super::super::vm::instruction::Target;
     use super::*;
+
+    #[test]
+    fn test_parse_empty() {
+        assert_eq!(parse_text(""), Ok(vec![]),);
+    }
 
     #[test]
     fn test_parse_text() {

@@ -23,7 +23,7 @@ fn strip_empty_lines(i: &str) -> String {
 
 fn expand_macros(i: &str) -> String {
     let macros =
-        Regex::new(r"(?is)@rep[[:blank:]]+(\d+)[[:blank:]]?\n(.+?)[[:blank:]]?@end[[:blank:]]?\n")
+        Regex::new(r"(?is)@rep[[:blank:]]+(\d+)[[:blank:]]?\n(.*?)[[:blank:]]?@end[[:blank:]]?\n")
             .unwrap();
     let expansions = Regex::new(r"@\{(-?\d+),(-?\d+)\}").unwrap();
 
@@ -160,5 +160,19 @@ mod tests {
             expand_macros("@rep 2\ncopy @{20,40} x\n @end\n"),
             String::from("copy 20 x\ncopy 60 x\n"),
         );
+    }
+
+    // Apparently you can use @REP 0 to easily disable code blocks
+    #[test]
+    fn test_rep_0() {
+        assert_eq!(
+            expand_macros("@rep 0\ncopy 1 x\n@end\nnoop\n"),
+            String::from("noop\n"),
+        )
+    }
+
+    #[test]
+    fn test_rep_0_no_contents() {
+        assert_eq!(expand_macros("@rep 0\n@end\n"), String::from(""),)
     }
 }
