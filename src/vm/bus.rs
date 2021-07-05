@@ -59,6 +59,15 @@ impl MessageBus {
         Err(ExaError::Freezing("bus write successful, freezing until it is read").into())
     }
 
+    pub fn on_kill_exa(&mut self, exa_name: &str) {
+        for (idx, message) in self.messages.iter().enumerate() {
+            if message.sender == exa_name {
+                self.messages.remove(idx);
+                return;
+            }
+        }
+    }
+
     /// Reset read_available and make all written messages visible. Needs to be
     /// run before Exa cycles each VM cycle.
     pub fn run_cycle(&mut self) {

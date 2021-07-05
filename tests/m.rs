@@ -210,3 +210,15 @@ fn test_mrd_stops_affecting_t_register() {
     bench.run_cycle();
     bench.assert_exa_register(&e1, "t", 5);
 }
+
+#[test]
+fn killed_exas_removed_from_m_send_queues() {
+    let mut bench = TestBench::basic_vm();
+    let _e1 = bench.exa("copy 0 m\n");
+    let _e2 = bench.exa("noop\n kill\n void m\n");
+
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    // sufficient not to panic here
+}

@@ -65,13 +65,18 @@ impl<'a> VM<'a> {
                         exa.borrow_mut().host.borrow_mut().free_slot();
                     }
                 }
+
+                // purge any messages sent by this exa from message buses
+                self.bus.borrow_mut().on_kill_exa(&exa.borrow().name);
+                for host in self.hosts.values_mut() {
+                    host.borrow_mut().bus.on_kill_exa(&exa.borrow().name);
+                }
+
                 self.exas.remove(i);
             } else {
                 i += 1;
             }
         }
-
-        // TODO: Clear out killed EXAs from message bus send queues
 
         // Collision detection. Quadratic for now, let's see if we can
         // get away with it. We'll do some filtering to make it faster.
