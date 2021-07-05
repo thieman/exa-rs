@@ -109,36 +109,30 @@ impl Default for TriangleWave {
 #[derive(Debug)]
 pub struct Noise {
     samples: Vec<i16>,
-    pos: f64,
+    pos: usize,
     audio_buffer: Vec<i16>,
-    frequency: f64,
+    undersample: i32,
 }
 
 impl AudioSample for Noise {
     fn set_frequency(&mut self, value: i32) {
-        let steps = value as f64 - 60.0;
-        self.frequency = f64::powf(2.0, steps as f64 / 12.0) * 261.63;
+        self.undersample = 99 - value;
     }
 
     fn sample(&mut self) -> &[i16] {
-        let (mut last, mut steps) = (0, 0);
-        for idx in 0..44100 / 60 {
-            self.pos += self.frequency;
-            if self.pos > 44100.0 {
-                self.pos -= 44100.0;
+        let mut idx = 0;
+        while idx < 44100 / 60 {
+            for _ in 0..=self.undersample {
+                self.audio_buffer[idx] = self.samples[self.pos];
+                idx += 1;
+                if idx >= 44100 / 60 {
+                    break;
+                }
             }
-
-            if steps == 20 {
-                steps = 0;
+            self.pos += 1;
+            if self.pos >= self.samples.len() {
+                self.pos = 0;
             }
-
-            if steps == 0 {
-                let sample_idx = self.pos.floor() as usize;
-                last = self.samples[sample_idx];
-            }
-
-            steps += 1;
-            self.audio_buffer[idx] = last;
         }
         &self.audio_buffer
     }
@@ -146,19 +140,22 @@ impl AudioSample for Noise {
 
 impl Default for Noise {
     fn default() -> Self {
-        let mut samples = vec![0; 44100];
-        for idx in 0..44100 {
-            let mut t = (2.0 * f64::consts::PI * idx as f64 / 44100.0).sin();
-            t *= 1.0 + (fastrand::f64() - 0.5) * 0.5;
-            t /= 1.5;
-            samples[idx] = (t * i16::MAX as f64) as i16;
+        let mut samples = vec![0; 4000];
+        for idx in 0..4000 {
+            let mut value = fastrand::i16(-5000..=5000);
+            if value < 0 {
+                value -= 15000;
+            } else {
+                value += 15000;
+            }
+            samples[idx] = value;
         }
 
         Noise {
             samples,
-            pos: 0.0,
+            pos: 0,
             audio_buffer: vec![0; 44100 / 60],
-            frequency: 0.0,
+            undersample: 0,
         }
     }
 }
@@ -188,15 +185,15 @@ impl<'a> VM<'a> {
 
         let mut waves: Vec<&[i16]> = vec![];
         if sqr0_value > 0 {
-            // waves.push(sqr0_wave.sample());
+            waves.push(sqr0_wave.sample());
         }
 
         if sqr1_value > 0 {
-            // waves.push(sqr1_wave.sample());
+            waves.push(sqr1_wave.sample());
         }
 
         if tri0_value > 0 {
-            // waves.push(tri0_wave.sample());
+            waves.push(tri0_wave.sample());
         }
 
         if nse0_value > 0 {

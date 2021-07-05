@@ -520,6 +520,10 @@ impl<'a> Exa<'a> {
             "gx" => clamp(value, -10, 120),
             "gy" => clamp(value, -10, 100),
             "gz" => clamp(value, -9, 9),
+            "#sqr0" => clamp(value, 0, 99),
+            "#sqr1" => clamp(value, 0, 99),
+            "#tri0" => clamp(value, 0, 99),
+            "#nse0" => clamp(value, 0, 99),
             _ => value,
         };
         Ok(())

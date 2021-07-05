@@ -63,26 +63,11 @@ impl Core for Emulator<'_> {
         self.rom_path = Some(path.clone());
         self.game_data = Some(game_data);
 
-        self.vm = Some(VM::new_redshift());
-        let host1 = self.vm.as_ref().unwrap().hosts.get("core").unwrap().clone();
-
-        Exa::spawn(
-            &mut self.vm.as_mut().unwrap(),
-            host1.clone(),
-            "x0".to_string(),
-            true,
-            "link 801\n copy 99 x\n mark a\n copy x #nse0\n @rep 5\n wait\n @end\n subi x 1 x\n jump a\n",
-            // "link 801\n copy 60 #sqr0\n mark a\n wait\n jump a\n",
-        )
-        .expect("cannot spawn");
-
-        if false {
-            match load_image(path) {
-                Ok(vm) => self.vm = Some(vm),
-                Err(_) => {
-                    self.rom_path = None;
-                    return LoadGameResult::Failed(self.game_data.take().unwrap());
-                }
+        match load_image(path) {
+            Ok(vm) => self.vm = Some(vm),
+            Err(_) => {
+                self.rom_path = None;
+                return LoadGameResult::Failed(self.game_data.take().unwrap());
             }
         }
 
