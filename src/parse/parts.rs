@@ -50,9 +50,10 @@ fn parse_target(i: &str) -> IResult<&str, Target> {
 }
 
 fn parse_label(i: &str) -> IResult<&str, Label> {
-    map(take_while(|c: char| c.is_alphanumeric()), |s: &str| {
-        s.to_ascii_lowercase()
-    })(i)
+    map(
+        take_while(|c: char| c.is_alphanumeric() || c == '_'),
+        |s: &str| s.to_ascii_lowercase(),
+    )(i)
 }
 
 fn parse_copy(i: &str) -> IResult<&str, Instruction> {
@@ -475,5 +476,13 @@ mod tests {
                 )
             )),
         );
+    }
+
+    #[test]
+    fn test_label_with_underscore() {
+        assert_eq!(
+            parse_mark("mark my_label\n"),
+            Ok(("\n", Instruction::Mark("my_label".into()))),
+        )
     }
 }
