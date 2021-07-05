@@ -57,8 +57,14 @@ impl<'a> VM<'a> {
         while i != self.exas.len() {
             let exa = &self.exas[i];
             if exa.borrow().is_fatal() {
-                // TODO: Drop file
-                exa.borrow_mut().host.borrow_mut().free_slot();
+                {
+                    if exa.borrow().file.is_some() {
+                        let dropped_file = exa.borrow_mut().file.take().unwrap();
+                        exa.borrow().host.borrow_mut().files.push(dropped_file);
+                    } else {
+                        exa.borrow_mut().host.borrow_mut().free_slot();
+                    }
+                }
                 self.exas.remove(i);
             } else {
                 i += 1;

@@ -192,3 +192,14 @@ fn grabbing_file_frees_up_slot_in_host() {
     bench.run_cycle();
     bench.assert_host_occupied_slots("start", 2);
 }
+
+#[test]
+fn drop_file_on_halt() {
+    let mut bench = TestBench::basic_vm();
+    let _e1 = bench.exa("make\n halt\n");
+
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.assert_host_file("start", 400);
+}
