@@ -25,7 +25,7 @@ fn expand_macros(i: &str) -> String {
     let macros =
         Regex::new(r"(?is)@rep[[:blank:]]+(\d+)[[:blank:]]?\n(.+?)[[:blank:]]?@end[[:blank:]]?\n")
             .unwrap();
-    let expansions = Regex::new(r"@\{(-?\d)+,(-?\d)+\}").unwrap();
+    let expansions = Regex::new(r"@\{(-?\d+),(-?\d+)\}").unwrap();
 
     let mut out = String::with_capacity(i.len());
 
@@ -152,5 +152,13 @@ mod tests {
             expand_macros("@rep 2\nnoop\n@end\n@rep 2\ncopy 1 x\n@end\n"),
             String::from("noop\nnoop\ncopy 1 x\ncopy 1 x\n"),
         )
+    }
+
+    #[test]
+    fn test_macro_expand_value_multiple_digits() {
+        assert_eq!(
+            expand_macros("@rep 2\ncopy @{20,40} x\n @end\n"),
+            String::from("copy 20 x\ncopy 60 x\n"),
+        );
     }
 }
