@@ -10,16 +10,16 @@ pub trait AudioSample {
     fn set_frequency(&mut self, value: i32);
 
     /// Fill audio_buffer for next frame and return borrow of it
-    fn sample(&mut self) -> &[i16; 44100 / 60];
+    fn sample(&mut self) -> &[i16];
 }
 
 pub trait WaveForm: Default + AudioSample {}
 
 #[derive(Debug)]
 pub struct SquareWave {
-    samples: [i16; 44100],
+    samples: Vec<i16>,
     pos: f64,
-    audio_buffer: [i16; 44100 / 60],
+    audio_buffer: Vec<i16>,
     frequency: f64,
 }
 
@@ -29,7 +29,7 @@ impl AudioSample for SquareWave {
         self.frequency = f64::powf(2.0, steps as f64 / 12.0) * 261.63;
     }
 
-    fn sample(&mut self) -> &[i16; 44100 / 60] {
+    fn sample(&mut self) -> &[i16] {
         for idx in 0..44100 / 60 {
             self.pos += self.frequency;
             if self.pos > 44100.0 {
@@ -45,7 +45,7 @@ impl AudioSample for SquareWave {
 
 impl Default for SquareWave {
     fn default() -> Self {
-        let mut samples = [0; 44100];
+        let mut samples = vec![0; 44100];
         for idx in 0..44100 {
             let t = (2.0 * f64::consts::PI * idx as f64 / 44100.0).sin();
             samples[idx] = if t > 0.0 { i16::MAX } else { i16::MIN };
@@ -54,7 +54,7 @@ impl Default for SquareWave {
         SquareWave {
             samples,
             pos: 0.0,
-            audio_buffer: [0; 44100 / 60],
+            audio_buffer: vec![0; 44100 / 60],
             frequency: 0.0,
         }
     }
@@ -62,9 +62,9 @@ impl Default for SquareWave {
 
 #[derive(Debug)]
 pub struct TriangleWave {
-    samples: [i16; 44100],
+    samples: Vec<i16>,
     pos: f64,
-    audio_buffer: [i16; 44100 / 60],
+    audio_buffer: Vec<i16>,
     frequency: f64,
 }
 
@@ -74,7 +74,7 @@ impl AudioSample for TriangleWave {
         self.frequency = f64::powf(2.0, steps as f64 / 12.0) * 261.63;
     }
 
-    fn sample(&mut self) -> &[i16; 44100 / 60] {
+    fn sample(&mut self) -> &[i16] {
         for idx in 0..44100 / 60 {
             self.pos += self.frequency;
             if self.pos > 44100.0 {
@@ -90,7 +90,7 @@ impl AudioSample for TriangleWave {
 
 impl Default for TriangleWave {
     fn default() -> Self {
-        let mut samples = [0; 44100];
+        let mut samples = vec![0; 44100];
         for idx in 0..44100 {
             let t = (2.0 / f64::consts::PI)
                 * (2.0 * f64::consts::PI * idx as f64 / 44100.0).sin().asin();
@@ -100,7 +100,7 @@ impl Default for TriangleWave {
         TriangleWave {
             samples,
             pos: 0.0,
-            audio_buffer: [0; 44100 / 60],
+            audio_buffer: vec![0; 44100 / 60],
             frequency: 0.0,
         }
     }
@@ -108,9 +108,9 @@ impl Default for TriangleWave {
 
 #[derive(Debug)]
 pub struct Noise {
-    samples: [i16; 44100],
+    samples: Vec<i16>,
     pos: f64,
-    audio_buffer: [i16; 44100 / 60],
+    audio_buffer: Vec<i16>,
     frequency: f64,
 }
 
@@ -120,7 +120,7 @@ impl AudioSample for Noise {
         self.frequency = f64::powf(2.0, steps as f64 / 12.0) * 261.63;
     }
 
-    fn sample(&mut self) -> &[i16; 44100 / 60] {
+    fn sample(&mut self) -> &[i16] {
         let (mut last, mut steps) = (0, 0);
         for idx in 0..44100 / 60 {
             self.pos += self.frequency;
@@ -146,19 +146,18 @@ impl AudioSample for Noise {
 
 impl Default for Noise {
     fn default() -> Self {
-        let mut samples = [0; 44100];
+        let mut samples = vec![0; 44100];
         for idx in 0..44100 {
-            let mut value = fastrand::i16(0..20000);
-            if idx > 44100 / 2 {
-                value *= -1;
-            }
-            samples[idx] = value;
+            let mut t = (2.0 * f64::consts::PI * idx as f64 / 44100.0).sin();
+            t *= 1.0 + (fastrand::f64() - 0.5) * 0.5;
+            t /= 1.5;
+            samples[idx] = (t * i16::MAX as f64) as i16;
         }
 
         Noise {
             samples,
             pos: 0.0,
-            audio_buffer: [0; 44100 / 60],
+            audio_buffer: vec![0; 44100 / 60],
             frequency: 0.0,
         }
     }
