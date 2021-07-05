@@ -7,7 +7,6 @@ pub mod vm;
 use libretro::*;
 
 use crate::image::load_image;
-use vm::exa::Exa;
 use vm::redshift::RedshiftButton;
 use vm::VM;
 

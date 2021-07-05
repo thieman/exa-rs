@@ -115,9 +115,7 @@ impl<'a> VM<'a> {
         // would have actually blocked. But the *next* cycle it won't block.
         for exa in self.exas.iter() {
             let mut e = exa.borrow_mut();
-            if e.will_test_mrd_this_cycle() {
-                e.ran_test_mrd_this_cycle = true;
-            }
+            e.ran_test_mrd_this_cycle = e.will_test_mrd_this_cycle();
         }
 
         self.exa_stack.clone_from(&self.exas);

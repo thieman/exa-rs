@@ -3,6 +3,16 @@ mod common;
 use common::*;
 
 #[test]
+fn test_manual() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("copy 70 t\n test t = 70\n");
+    bench.run_cycle();
+    bench.assert_exa_register(&e1, "t", 70);
+    bench.run_cycle();
+    bench.assert_exa_register(&e1, "t", 1);
+}
+
+#[test]
 fn test_equal() {
     let mut bench = TestBench::basic_vm();
     let e1 = bench.exa("test 5 = 5\n");

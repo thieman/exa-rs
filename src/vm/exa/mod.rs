@@ -64,14 +64,32 @@ impl Registers {
     /// a normal clone given we're working with Rcs)
     pub fn clone_for_repl(&self) -> Registers {
         Registers {
-            x: Register::new_shared(self.x.borrow().permissions.clone(), self.x.borrow().value),
-            t: Register::new_shared(self.t.borrow().permissions.clone(), self.t.borrow().value),
-            gx: Register::new_shared(self.gx.borrow().permissions.clone(), self.gx.borrow().value),
-            gy: Register::new_shared(self.gy.borrow().permissions.clone(), self.gy.borrow().value),
-            gz: Register::new_shared(self.gz.borrow().permissions.clone(), self.gz.borrow().value),
+            x: Register::new_shared(
+                self.x.borrow().permissions.clone(),
+                self.x.borrow().value.clone(),
+            ),
+            t: Register::new_shared(
+                self.t.borrow().permissions.clone(),
+                self.t.borrow().value.clone(),
+            ),
+            gx: Register::new_shared(
+                self.gx.borrow().permissions.clone(),
+                self.gx.borrow().value.clone(),
+            ),
+            gy: Register::new_shared(
+                self.gy.borrow().permissions.clone(),
+                self.gy.borrow().value.clone(),
+            ),
+            gz: Register::new_shared(
+                self.gz.borrow().permissions.clone(),
+                self.gz.borrow().value.clone(),
+            ),
             gp: Register::new_shared(self.gp.borrow().permissions.clone(), 0),
             ci: Register::new_shared(self.ci.borrow().permissions.clone(), -9999),
-            co: Register::new_shared(self.co.borrow().permissions.clone(), self.co.borrow().value),
+            co: Register::new_shared(
+                self.co.borrow().permissions.clone(),
+                self.co.borrow().value.clone(),
+            ),
         }
     }
 }
@@ -164,11 +182,7 @@ impl<'a> Exa<'a> {
         Ok(e)
     }
 
-    pub fn inner_repl(
-        &self,
-        vm: &mut VM<'a>,
-        pc: usize,
-    ) -> Result<Shared<Exa<'a>>, Box<dyn Error>> {
+    pub fn inner_repl(&self, vm: &mut VM<'a>, pc: usize) -> Result<(), Box<dyn Error>> {
         self.host.borrow_mut().reserve_slot()?;
 
         let (name, spawn_id) = self.name_and_id_for_repl();
@@ -194,8 +208,8 @@ impl<'a> Exa<'a> {
             ran_test_mrd_this_cycle: false,
             waiting: false,
         }));
-        vm.register_exa(e.clone());
-        Ok(e)
+        vm.register_exa(e);
+        Ok(())
     }
 
     fn name_and_id_for_repl(&self) -> (String, u64) {
@@ -339,9 +353,14 @@ impl fmt::Display for Exa<'_> {
 
         write!(
             f,
-            "\n\tX: {} T: {}",
+            "\n\tX: {} T: {} GX: {} GY: {} GZ: {} CI: {} CO: {}",
             &self.registers.x.borrow().value,
-            &self.registers.t.borrow().value
+            &self.registers.t.borrow().value,
+            &self.registers.gx.borrow().value,
+            &self.registers.gy.borrow().value,
+            &self.registers.gz.borrow().value,
+            &self.registers.ci.borrow().value,
+            &self.registers.co.borrow().value,
         )?;
 
         if let Some(file) = &self.file {

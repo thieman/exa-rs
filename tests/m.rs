@@ -197,3 +197,16 @@ fn test_mrd_after_read() {
     bench.run_cycle();
     bench.assert_exa_register(&e4, "t", 1);
 }
+
+// Regression test for a hilarious bug where, if you ever ran
+// TEST MRD in your program, we'd helpfully set your T value
+// to the TEST MRD result every cycle for the rest of eternity.
+#[test]
+fn test_mrd_stops_affecting_t_register() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("test mrd\n copy 5 t\n");
+
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.assert_exa_register(&e1, "t", 5);
+}

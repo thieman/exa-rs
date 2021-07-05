@@ -457,7 +457,7 @@ impl<'a> Exa<'a> {
             return Err(ExaError::Fatal("invalid rand range").into());
         }
 
-        let value = fastrand::i32(lo_value..hi_value + 1);
+        let value = fastrand::i32(lo_value..=hi_value);
         match dest {
             Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),
             Target::Register(r) => self.write_register(r, value),
