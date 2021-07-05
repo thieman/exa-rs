@@ -164,6 +164,23 @@ fn file_drop_resets_file_pointer() {
 }
 
 #[test]
+fn file_wipe_resets_file_pointer() {
+    let mut bench = TestBench::basic_vm();
+    let e1 =
+        bench.exa("make\n copy 1 f\n drop\n make\n copy 2 f\n wipe\n grab 400\n copy f t\n noop\n");
+
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.run_cycle();
+    bench.assert_exa_register(&e1, "t", 1);
+}
+
+#[test]
 fn grabbing_file_frees_up_slot_in_host() {
     let mut bench = TestBench::basic_vm();
     let _e1 = bench.exa("make\n drop\n grab 400\n noop\n");

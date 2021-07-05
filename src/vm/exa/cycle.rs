@@ -363,6 +363,7 @@ impl<'a> Exa<'a> {
         }
 
         self.file = None;
+        self.file_pointer = 0;
 
         Ok(())
     }
