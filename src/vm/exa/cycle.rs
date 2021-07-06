@@ -134,7 +134,7 @@ impl<'a> Exa<'a> {
 
     pub fn unfreeze(&mut self) {
         if !self.is_frozen() {
-            panic!("cannot call unfreeze, exa is not frozen");
+            panic!("cannot call unfreeze on {}, exa is not frozen", self.name);
         }
 
         self.error = None;

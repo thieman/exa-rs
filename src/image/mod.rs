@@ -1,4 +1,5 @@
 use std::boxed::Box;
+use std::collections::HashSet;
 use std::convert::TryInto;
 use std::error::Error;
 
@@ -114,9 +115,17 @@ pub fn load_image<'a>(path: String) -> Result<VM<'a>, Box<dyn Error>> {
     let exa_count = image_data.read_int();
 
     let start_host = vm.hosts.get("core").unwrap().clone();
+    let mut seen_names: HashSet<String> = HashSet::new();
+
     for _ in 0..exa_count {
         let _unknown_4 = image_data.read_byte();
-        let exa_name = image_data.read_string();
+        let mut exa_name = image_data.read_string();
+
+        while seen_names.contains(&exa_name) {
+            exa_name.push_str("x");
+        }
+        seen_names.insert(exa_name.clone());
+
         let mut exa_script = image_data.read_string();
         // hack to help out our parser
         if !exa_script.ends_with("\n") {
