@@ -19,6 +19,8 @@ struct Emulator<'a> {
     pub frame_counter: u64,
     vm: Option<VM<'a>>,
     video_frame: [u8; 120 * 100 * 2],
+
+    run: bool,
 }
 
 impl Default for Emulator<'_> {
@@ -35,6 +37,7 @@ impl<'a> Emulator<'_> {
             frame_counter: 0,
             vm: None,
             video_frame: [0; 120 * 100 * 2],
+            run: true,
         }
     }
 
@@ -119,15 +122,20 @@ impl Core for Emulator<'_> {
         }
 
         if handle.is_joypad_button_pressed(0, JoypadButton::Select) {
-            println!("{}", &vm);
+            self.run = !self.run;
         }
 
         if handle.is_joypad_button_pressed(0, JoypadButton::X) {
             vm.run_cycle();
+        }
+
+        if handle.is_joypad_button_pressed(0, JoypadButton::R1) {
             println!("{}", &vm);
         }
 
-        vm.run_for_frame();
+        if self.run {
+            vm.run_for_frame();
+        }
 
         Emulator::update_video_frame(&mut self.video_frame, vm.render());
         handle.upload_video_frame(&self.video_frame);

@@ -100,6 +100,15 @@ pub enum Mode {
     Global,
 }
 
+impl fmt::Display for Mode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Mode::Local => write!(f, "Local"),
+            _ => write!(f, "Global"),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Exa<'a> {
     base_name: String,
@@ -340,8 +349,8 @@ impl fmt::Display for Exa<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "\tExa {} pc:{} fp:{}",
-            self.name, self.pc, self.file_pointer
+            "\tExa {} pc:{} fp:{} mode:{}",
+            self.name, self.pc, self.file_pointer, self.mode,
         )?;
 
         if let Some(e) = &self.error {

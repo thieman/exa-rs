@@ -135,6 +135,11 @@ impl<'a> VM<'a> {
             !e.is_frozen() && !e.is_fatal()
         });
 
+        // Shuffling here is important because it's the only way we have
+        // of randomizing which EXAs get messages off the message buses
+        // in which order. Plenty of games rely on that being random.
+        fastrand::shuffle(&mut self.exa_stack);
+
         while self.exa_stack.len() != 0 {
             let exa = self.exa_stack.remove(0);
             let mut exa_mut = exa.borrow_mut();
