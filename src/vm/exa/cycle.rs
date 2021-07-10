@@ -239,7 +239,9 @@ impl<'a> Exa<'a> {
             return Err(ExaError::Fatal("divide by zero").into());
         }
 
-        let value = self.read_target(left)? % right;
+        let left = self.read_target(left)?;
+        let r = left % right;
+        let value = if r < 0 { r + right } else { r };
 
         match dest {
             Target::Literal(_) => Err(ExaError::Fatal("cannot write to literal").into()),

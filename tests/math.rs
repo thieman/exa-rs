@@ -87,7 +87,7 @@ fn modi() {
     bench.assert_exa_register(&e1, "x", 0);
     bench.assert_exa_register(&e2, "x", 1);
     bench.assert_exa_register(&e3, "x", 0);
-    bench.assert_exa_register(&e4, "x", -1);
+    bench.assert_exa_register(&e4, "x", 3);
 }
 
 #[test]
@@ -114,4 +114,17 @@ fn swiz_sign() {
     bench.assert_exa_register(&e4, "x", -2100);
     bench.assert_exa_register(&e5, "x", -2100);
     bench.assert_exa_register(&e6, "x", 2100);
+}
+
+#[test]
+fn modi_neg() {
+    let mut bench = TestBench::basic_vm();
+    let e1 = bench.exa("copy 80 t\n modi -1 t t\n modi -1 t t\n");
+
+    bench.run_cycle();
+    bench.assert_exa_register(&e1, "t", 80);
+    bench.run_cycle();
+    bench.assert_exa_register(&e1, "t", 79);
+    bench.run_cycle();
+    bench.assert_exa_register(&e1, "t", 78);
 }
