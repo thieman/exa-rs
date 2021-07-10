@@ -16,14 +16,21 @@ impl<'a> VM<'a> {
     /// some determinism, we have set cycle counts based
     /// on how many EXAs are currently alive.
     pub fn run_for_frame(&mut self) {
-        let cycles = match self.exas.len() {
+        let mut cycles = match self.exas.len() {
             0 => 0,
-            1..=5 => 10000,
-            6..=10 => 5000,
-            11..=15 => 2000,
-            16..=20 => 1000,
+            1..=5 => 1000,
+            6..=10 => 750,
             _ => 500,
         };
+        #[cfg(target_os = "android")]
+        {
+            cycles = match self.exas.len() {
+                0 => 0,
+                1..=5 => 200,
+                6..=10 => 150,
+                _ => 80,
+            };
+        }
         self.run_cycles(cycles);
     }
 
