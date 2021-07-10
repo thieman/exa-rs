@@ -121,16 +121,19 @@ impl Core for Emulator<'_> {
             vm.input_pressed(RedshiftButton::Right);
         }
 
-        if handle.is_joypad_button_pressed(0, JoypadButton::Select) {
-            self.run = !self.run;
-        }
+        #[cfg(feature = "runtime_controls")]
+        {
+            if handle.is_joypad_button_pressed(0, JoypadButton::Select) {
+                self.run = !self.run;
+            }
 
-        if handle.is_joypad_button_pressed(0, JoypadButton::X) {
-            vm.run_cycle();
-        }
+            if handle.is_joypad_button_pressed(0, JoypadButton::X) {
+                vm.run_cycle();
+            }
 
-        if handle.is_joypad_button_pressed(0, JoypadButton::R1) {
-            println!("{}", &vm);
+            if handle.is_joypad_button_pressed(0, JoypadButton::R1) {
+                println!("{}", &vm);
+            }
         }
 
         if self.run {
@@ -144,7 +147,10 @@ impl Core for Emulator<'_> {
     }
 
     fn on_reset(&mut self) {
-        self.vm.as_mut().unwrap().run_cycle();
+        match load_image(self.rom_path.as_ref().unwrap().to_string()) {
+            Ok(vm) => self.vm = Some(vm),
+            Err(_) => panic!("failed to reset"),
+        }
     }
 }
 
