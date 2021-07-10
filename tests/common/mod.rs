@@ -44,6 +44,8 @@ impl<'a> TestBench<'a> {
         vm.add_link(800, h1.clone(), h2.clone());
         vm.add_link(-1, h2.clone(), h1.clone());
 
+        vm.randomize_exa_order = false;
+
         TestBench {
             vm: Rc::new(RefCell::new(vm)),
             spawned: 0,
@@ -52,7 +54,8 @@ impl<'a> TestBench<'a> {
     }
 
     pub fn redshift_vm() -> TestBench<'a> {
-        let vm = VM::new_redshift();
+        let mut vm = VM::new_redshift();
+        vm.randomize_exa_order = false;
 
         TestBench {
             vm: Rc::new(RefCell::new(vm)),

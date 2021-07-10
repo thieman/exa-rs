@@ -157,6 +157,8 @@ pub struct VM<'a> {
     audio_buffer: [i16; (44100 / 60) * 2],
 
     pub redshift: Option<RedshiftEnvironment>,
+
+    pub randomize_exa_order: bool,
 }
 
 impl<'a> VM<'a> {
@@ -171,6 +173,7 @@ impl<'a> VM<'a> {
             framebuffer: [false; 120 * 100],
             audio_buffer: [0; (44100 / 60) * 2],
             redshift: None,
+            randomize_exa_order: true,
         }
     }
 
