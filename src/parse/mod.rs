@@ -189,4 +189,17 @@ note we groovin";
             ]
         )
     }
+
+    #[test]
+    fn test_mean_macro_comment() {
+        let s = "copy 1 x\n@REP 0;[X] ARGUMENT:\n;-200 SHIFT UP\n; 200 SHIFT DOWN\n;  -2 SHIFT LEFT\n@END  ;   2 SHIFT RIGHT\ncopy 2 t\n";
+        let parsed = parse_text(s).unwrap();
+        assert_eq!(
+            parsed,
+            vec![
+                Instruction::Copy(Target::Literal(1), Target::Register("x".into())),
+                Instruction::Copy(Target::Literal(2), Target::Register("t".into()))
+            ]
+        );
+    }
 }

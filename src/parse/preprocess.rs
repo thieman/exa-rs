@@ -23,7 +23,7 @@ fn strip_empty_lines(i: &str) -> String {
 
 fn expand_macros(i: &str) -> String {
     let macros =
-        Regex::new(r"(?is)@rep[[:blank:]]+(\d+)[[:blank:]]?\n(.*?)[[:blank:]]?@end[[:blank:]]?\n")
+        Regex::new(r"(?is)@rep[[:blank:]]+(\d+)[[:blank:]]*\n(.*?)[[:blank:]]?@end[[:blank:]]*\n")
             .unwrap();
     let expansions = Regex::new(r"@\{(-?\d+),(-?\d+)\}").unwrap();
 
