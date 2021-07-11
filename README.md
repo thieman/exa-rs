@@ -17,7 +17,7 @@ The core contains a mostly-complete implementation of the following:
 - Redshift-specific extensions to the normal Exa VM, such as sprites and collision detection
 - the Redshift frontend **(right)**, which combines the Exa sprites and register states to produce audio and video output, and also sends button input to the VM registers
 
-<img src="./doc/redshift.jpg" width="600px" />
+<img src="./doc/redshift.jpg" width="1000px" />
 
 The core is also able to load games from Redshift ROMs, which are baked into PNGs using steganography. The ROM data is stored in the LSBs of the pixels at the top of the image. Example ROM:
 
