@@ -1,5 +1,7 @@
 # exa-rs
 
+![](./doc/header.apng)
+
 [Libretro](https://www.libretro.com/) core for the [TEC Redshift](https://store.steampowered.com/app/948420/EXAPUNKS_TEC_Redshift_Player/), a fictional video game handheld found in Zachtronics' [EXAPUNKS](https://store.steampowered.com/app/716490/EXAPUNKS/).
 
 You can use this core to play Redshift games in your favorite libretro frontend, such as [Retroarch](https://www.retroarch.com/).
