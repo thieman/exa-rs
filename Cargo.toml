@@ -4,10 +4,6 @@ version = "0.1.0"
 authors = ["Travis Thieman <travis.thieman@gmail.com>"]
 edition = "2018"
 
-[[bin]]
-name = "exa-standalone"
-path = "src/main.rs"
-
 [lib]
 crate-type = ["lib", "cdylib"]
 name = "exa"
