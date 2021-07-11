@@ -33,6 +33,7 @@ Unimplemented or partially complete features:
 - The core does not support keywords as they are not usable for Redshift games. The `HOST` command is a no-op.
 - Square and triangle waves should be pretty faithful to the reference Redshift. The Noise waveform, however, is an approximation based on downsampling white noise. It's unclear exactly how Zachtronics' Noise waveform was created.
 - Saving and loading states is not implemented
+- Anaglyph 3D mode is not implemented
 
 ## Building
 
