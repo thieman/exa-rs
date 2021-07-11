@@ -2,7 +2,7 @@
 
 ![](./doc/header.apng)
 
-*Above: 15-puzzle by Isaac Waas*
+*Above: 15-puzzle by Isaac Wass*
 
 [Libretro](https://www.libretro.com/) core for the [TEC Redshift](https://store.steampowered.com/app/948420/EXAPUNKS_TEC_Redshift_Player/), a fictional video game handheld found in Zachtronics' [EXAPUNKS](https://store.steampowered.com/app/716490/EXAPUNKS/).
 
