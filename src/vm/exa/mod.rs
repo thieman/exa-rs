@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 use std::rc::Rc;
-use std::sync::atomic::{AtomicI32, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicI32, AtomicU32, Ordering};
 
 use super::super::parse::parse_text;
 use super::bus::MessageBus;
@@ -112,12 +112,12 @@ impl fmt::Display for Mode {
 #[derive(Debug)]
 pub struct Exa<'a> {
     base_name: String,
-    spawn_id: u64,
+    spawn_id: u32,
     pub name: String,
 
     registers: Registers,
     result: CycleResult,
-    spawn_counter: Rc<AtomicU64>,
+    spawn_counter: Rc<AtomicU32>,
     file_counter: Rc<AtomicI32>,
 
     pc: usize,
@@ -181,7 +181,7 @@ impl<'a> Exa<'a> {
             host: host,
             error: None,
             result: CycleResult::new(),
-            spawn_counter: Rc::new(AtomicU64::new(1)),
+            spawn_counter: Rc::new(AtomicU32::new(1)),
             file_counter: vm.file_counter.clone(),
             sprite: Sprite::empty(),
             ran_test_mrd_this_cycle: false,
@@ -221,7 +221,7 @@ impl<'a> Exa<'a> {
         Ok(())
     }
 
-    fn name_and_id_for_repl(&self) -> (String, u64) {
+    fn name_and_id_for_repl(&self) -> (String, u32) {
         let num = self.spawn_counter.fetch_add(1, Ordering::Relaxed);
         let mut name = self.base_name.clone();
         name.push_str(":");

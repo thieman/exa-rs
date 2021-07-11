@@ -16,7 +16,7 @@ struct Emulator<'a> {
     rom_path: Option<String>,
     game_data: Option<GameData>,
 
-    pub frame_counter: u64,
+    pub frame_counter: u32,
     vm: Option<VM<'a>>,
     video_frame: [u8; 120 * 100 * 2],
 

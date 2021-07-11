@@ -140,7 +140,7 @@ pub enum Permissions {
 
 #[derive(Debug)]
 pub struct VM<'a> {
-    pub cycle: u64,
+    pub cycle: u32,
 
     pub hosts: HashMap<String, Shared<Host<'a>>>,
 

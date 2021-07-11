@@ -1,4 +1,4 @@
-use std::f64;
+use std::f32;
 
 use fastrand;
 
@@ -18,15 +18,15 @@ pub trait WaveForm: Default + AudioSample {}
 #[derive(Debug)]
 pub struct SquareWave {
     samples: Vec<i16>,
-    pos: f64,
+    pos: f32,
     audio_buffer: Vec<i16>,
-    frequency: f64,
+    frequency: f32,
 }
 
 impl AudioSample for SquareWave {
     fn set_frequency(&mut self, value: i32) {
-        let steps = value as f64 - 60.0;
-        self.frequency = f64::powf(2.0, steps as f64 / 12.0) * 261.63;
+        let steps = value as f32 - 60.0;
+        self.frequency = f32::powf(2.0, steps as f32 / 12.0) * 261.63;
     }
 
     fn sample(&mut self) -> &[i16] {
@@ -47,7 +47,7 @@ impl Default for SquareWave {
     fn default() -> Self {
         let mut samples = vec![0; 44100];
         for idx in 0..44100 {
-            let t = (2.0 * f64::consts::PI * idx as f64 / 44100.0).sin();
+            let t = (2.0 * f32::consts::PI * idx as f32 / 44100.0).sin();
             samples[idx] = if t > 0.0 { i16::MAX } else { i16::MIN };
         }
 
@@ -63,15 +63,15 @@ impl Default for SquareWave {
 #[derive(Debug)]
 pub struct TriangleWave {
     samples: Vec<i16>,
-    pos: f64,
+    pos: f32,
     audio_buffer: Vec<i16>,
-    frequency: f64,
+    frequency: f32,
 }
 
 impl AudioSample for TriangleWave {
     fn set_frequency(&mut self, value: i32) {
-        let steps = value as f64 - 60.0;
-        self.frequency = f64::powf(2.0, steps as f64 / 12.0) * 261.63;
+        let steps = value as f32 - 60.0;
+        self.frequency = f32::powf(2.0, steps as f32 / 12.0) * 261.63;
     }
 
     fn sample(&mut self) -> &[i16] {
@@ -92,9 +92,9 @@ impl Default for TriangleWave {
     fn default() -> Self {
         let mut samples = vec![0; 44100];
         for idx in 0..44100 {
-            let t = (2.0 / f64::consts::PI)
-                * (2.0 * f64::consts::PI * idx as f64 / 44100.0).sin().asin();
-            samples[idx] = (t * i16::MAX as f64) as i16;
+            let t = (2.0 / f32::consts::PI)
+                * (2.0 * f32::consts::PI * idx as f32 / 44100.0).sin().asin();
+            samples[idx] = (t * i16::MAX as f32) as i16;
         }
 
         TriangleWave {
