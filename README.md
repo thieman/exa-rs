@@ -12,6 +12,38 @@ You can use this core to play Redshift games in your favorite libretro frontend,
 
 Pop over to [Releases](https://github.com/thieman/exa-rs/releases) and download the latest version of the core for your architecture. Load it up in Retroarch and you're ready to play Redshift games. Check out [awesome-redshift](https://github.com/Alekhine51/awesome-redshift) to start your collection, or make your own Redshift game in EXAPUNKS (which is super fun).
 
+## Background
+
+### Promotional Material
+
+The TEC Redshift is the premiere mobile gaming platform of 1992 and ships with the following features:
+
+- Computational support for up to 64 parallel EXAs
+- A 120x100 screen in gorgeous 6:5 aspect ratio. That's more than 10,000 pixels of raw visual delight
+- A questionable anaglyph 3D feature (not currently implemented in the core)
+- A sound system [similar to that of an NES](https://www.youtube.com/watch?v=UAf4UooMtBs). You get two square waves, a triangle wave, and some noise for drums and 'splosions
+- Three glorious buttons! Redshift does what NintenDON'T
+
+The Redshift also implements some great developer features in its hardware, making it even easier for you to hack out some games:
+
+- Sprite support, allowing each EXA to hold a whopping 100 pixels
+- A massive built-in sprite library containing more than 35 sprites
+- Per-pixel collision detection on every single cycle. Bounding boxes are for chumps!
+
+### But Really Though
+
+The Redshift is mostly a "freeform" puzzle for people to tackle after they've gotten their fill of the puzzles in EXAPUNKS, which is a fantastic game that you should definitely play if you're the type of person who reads READMEs on GitHub for fun.
+
+I started this project for a few reasons:
+
+1) I had to learn Rust or I was going to lose all my programming hipster cred
+2) Writing an emulator, even if it's a "fake" one, is super fun
+3) I thought I had a chance at being the first person to play the Redshift on an actual handheld
+
+Anyway, here's Wonderwall:
+
+$VIDEOLINK
+
 ## The Core
 
 The core contains a mostly-complete implementation of the following:
