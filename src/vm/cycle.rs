@@ -4,6 +4,24 @@ use super::error::ExaError;
 use super::exa::Exa;
 use super::{Shared, VM};
 
+// min_x, max_x, min_y, max_y
+type CellBound = (i32, i32, i32, i32);
+
+static CELL_BOUNDS: [CellBound; 12] = [
+    (-10, 25, -10, 30),
+    (15, 60, -10, 30),
+    (50, 95, -10, 30),
+    (85, 130, -10, 30),
+    (-10, 25, 20, 70),
+    (15, 60, 20, 70),
+    (50, 95, 20, 70),
+    (85, 130, 20, 70),
+    (-10, 25, 60, 110),
+    (15, 60, 60, 110),
+    (50, 95, 60, 110),
+    (85, 130, 60, 110),
+];
+
 impl<'a> VM<'a> {
     /// Run the VM for one animation frame at 30hz. The
     /// tricky part here is that how many cycles constitutes
@@ -103,16 +121,35 @@ impl<'a> VM<'a> {
             // every cycle, so there's no point in calculating it if it will
             // not be used.
             if uses_ci {
-                let collision_exas: Vec<Shared<Exa>> = self
+                // Before running collision detection against each Exa, we'll
+                // separate the grid into 12 partially-overlapping cells. Since
+                // we need to do a quadratic pass over the Exa set, splitting it
+                // up some should help keep our runtime down quite a bit.
+                let mut cells: Vec<Vec<Shared<Exa>>> = vec![vec![]; 12];
+
+                let collision_exas = self
                     .exas
                     .clone()
                     .into_iter()
-                    .filter(|e| !e.borrow().sprite.is_empty)
-                    .collect();
+                    .filter(|e| !e.borrow().sprite.is_empty);
 
-                for (left_idx, left_exa) in collision_exas.iter().enumerate() {
-                    for right_exa in collision_exas[left_idx + 1..].iter() {
-                        left_exa.borrow_mut().update_collision(&right_exa.borrow());
+                for e in collision_exas {
+                    let (ref self_x, ref self_y) = e.borrow().coords();
+
+                    for (idx, bounds) in CELL_BOUNDS.iter().enumerate() {
+                        let (min_x, max_x, min_y, max_y) = bounds;
+                        if min_x <= self_x && max_x >= self_x && min_y <= self_y && max_y >= self_y
+                        {
+                            cells[idx].push(e.clone());
+                        }
+                    }
+                }
+
+                for cell in cells.iter() {
+                    for (left_idx, left_exa) in cell.iter().enumerate() {
+                        for right_exa in cell[left_idx + 1..].iter() {
+                            left_exa.borrow_mut().update_collision(&right_exa.borrow());
+                        }
                     }
                 }
             }

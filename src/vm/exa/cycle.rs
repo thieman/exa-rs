@@ -639,6 +639,13 @@ impl<'a> Exa<'a> {
         Ok(r)
     }
 
+    pub fn coords(&self) -> (i32, i32) {
+        (
+            self.registers.gx.borrow().value,
+            self.registers.gy.borrow().value,
+        )
+    }
+
     pub fn reset_collision(&mut self) {
         self.registers.ci.borrow_mut().value = -9999;
     }
