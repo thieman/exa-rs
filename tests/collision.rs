@@ -19,7 +19,7 @@ fn test_no_collision() {
 fn test_collision_and_reset() {
     let mut bench = TestBench::redshift_vm();
     let e1 = bench.exa("copy 1 co\n copy 100 gp\n copy 0 gp\n noop\n");
-    let e2 = bench.exa("copy 2 co\n copy 100 gp\n noop\n noop\n");
+    let e2 = bench.exa("copy 2 co\n copy 100 gp\n copy ci x\n noop\n");
 
     bench.run_cycle();
     bench.assert_exa_register(&e1, "ci", -9999);
@@ -42,7 +42,7 @@ fn test_collision_and_reset() {
 fn test_out_of_bounds_collision() {
     let mut bench = TestBench::redshift_vm();
     let e1 = bench.exa("copy -5 gx\n copy 1 co\n copy 100 gp\n copy 0 gp\n noop\n");
-    let e2 = bench.exa("copy -5 gx\n copy 2 co\n copy 100 gp\n noop\n noop\n");
+    let e2 = bench.exa("copy -5 gx\n copy 2 co\n copy 100 gp\n copy ci x\n noop\n");
 
     bench.run_cycle();
     bench.run_cycle();
