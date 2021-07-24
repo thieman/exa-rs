@@ -12,7 +12,7 @@ use super::super::parse::parse_text;
 use super::bus::MessageBus;
 use super::error::ExaError;
 use super::file::File;
-use super::instruction::Instruction;
+use super::instruction::{Instruction, Target};
 use super::register::Register;
 use super::Permissions;
 use super::{Host, Shared, VM};
@@ -319,6 +319,52 @@ impl<'a> Exa<'a> {
         }
     }
 
+    fn has_ci_target(targets: &[&Target]) -> bool {
+        for target in targets.iter() {
+            match target {
+                Target::Register(ref r) => {
+                    if r == "ci" {
+                        return true;
+                    }
+                }
+                _ => (),
+            }
+        }
+        false
+    }
+
+    pub fn will_use_ci_this_cycle(&self) -> bool {
+        if self.pc >= self.instructions.len() {
+            return false;
+        }
+
+        match &self.instructions[self.pc].clone() {
+            Instruction::Link(ref dest) => Exa::has_ci_target(&[dest]),
+            Instruction::Copy(ref src, ref dest) => Exa::has_ci_target(&[src, dest]),
+            Instruction::Addi(ref left, ref right, ref dest) => {
+                Exa::has_ci_target(&[left, right, dest])
+            }
+            Instruction::Subi(ref left, ref right, ref dest) => {
+                Exa::has_ci_target(&[left, right, dest])
+            }
+            Instruction::Muli(ref left, ref right, ref dest) => {
+                Exa::has_ci_target(&[left, right, dest])
+            }
+            Instruction::Divi(ref left, ref right, ref dest) => {
+                Exa::has_ci_target(&[left, right, dest])
+            }
+            Instruction::Swiz(ref input, ref mask, ref dest) => {
+                Exa::has_ci_target(&[input, mask, dest])
+            }
+            Instruction::Test(ref left, _, ref right) => Exa::has_ci_target(&[left, right]),
+            Instruction::Grab(ref file_target) => Exa::has_ci_target(&[file_target]),
+            Instruction::Seek(ref target) => Exa::has_ci_target(&[target]),
+            Instruction::File(ref target) => Exa::has_ci_target(&[target]),
+            Instruction::Rand(ref lo, ref hi, ref dest) => Exa::has_ci_target(&[lo, hi, dest]),
+            _ => false,
+        }
+    }
+
     pub fn descendant_of(&self, other: &Exa<'a>) -> bool {
         self.base_name == other.base_name && self.spawn_id > other.spawn_id
     }
@@ -417,5 +463,17 @@ mod tests {
         assert_eq!(*extracted.get("first").expect("not found"), 0);
         assert_eq!(*extracted.get("second").expect("not found"), 1);
         assert_eq!(*extracted.get("third").expect("not found"), 1);
+    }
+
+    #[test]
+    fn has_ci_target() {
+        assert_eq!(true, Exa::has_ci_target(&[&Target::Register("ci".into())]));
+        assert_eq!(
+            true,
+            Exa::has_ci_target(&[&Target::Literal(123), &Target::Register("ci".into())])
+        );
+        assert_eq!(false, Exa::has_ci_target(&[&Target::Literal(123)]));
+        assert_eq!(false, Exa::has_ci_target(&[&Target::Register("co".into())]));
+        assert_eq!(false, Exa::has_ci_target(&[]));
     }
 }

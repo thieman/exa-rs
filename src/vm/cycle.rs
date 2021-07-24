@@ -88,20 +88,32 @@ impl<'a> VM<'a> {
 
         // Collision detection. Quadratic for now, let's see if we can
         // get away with it. We'll do some filtering to make it faster.
+        let mut uses_ci = false;
+
         if self.redshift.is_some() {
             for exa in self.exas.clone().into_iter() {
                 exa.borrow_mut().reset_collision();
+                if exa.borrow().will_use_ci_this_cycle() {
+                    uses_ci = true;
+                }
             }
-            let collision_exas: Vec<Shared<Exa>> = self
-                .exas
-                .clone()
-                .into_iter()
-                .filter(|e| !e.borrow().sprite.is_empty)
-                .collect();
 
-            for (left_idx, left_exa) in collision_exas.iter().enumerate() {
-                for right_exa in collision_exas[left_idx + 1..].iter() {
-                    left_exa.borrow_mut().update_collision(&right_exa.borrow());
+            // We only need to actually run the collision detection if any Exa
+            // will use their CI register this cycle. It is supposed to reset
+            // every cycle, so there's no point in calculating it if it will
+            // not be used.
+            if uses_ci {
+                let collision_exas: Vec<Shared<Exa>> = self
+                    .exas
+                    .clone()
+                    .into_iter()
+                    .filter(|e| !e.borrow().sprite.is_empty)
+                    .collect();
+
+                for (left_idx, left_exa) in collision_exas.iter().enumerate() {
+                    for right_exa in collision_exas[left_idx + 1..].iter() {
+                        left_exa.borrow_mut().update_collision(&right_exa.borrow());
+                    }
                 }
             }
         }
