@@ -42,7 +42,7 @@ I started this project for a few reasons:
 
 Anyway, here's Wonderwall:
 
-$VIDEOLINK
+[![TEC Redshift on Retroid Pocket 2](./doc/video.png)](https://www.youtube.com/watch?v=ueRJOj0mBJM "TEC Redshift on Retroid Pocket 2")
 
 ## The Core
 
